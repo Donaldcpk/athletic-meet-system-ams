@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>運動會計分系統測試頁面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .status {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+        }
+        .status.error {
+            border-left-color: #f44336;
+        }
+        .status-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        .button {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 10px;
+            margin: 10px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 香港中學運動會計分系統</h1>
+        
+        <div class="status" id="systemStatus">
+            <div class="status-icon">⏳</div>
+            <div>正在檢查系統狀態...</div>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>學生管理</h3>
+                <p>支援600+學生數據<br/>CSV批量匯入匯出</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏃</div>
+                <h3>項目管理</h3>
+                <p>田賽、徑賽、接力<br/>甲乙丙組自動分流</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>裁判計分</h3>
+                <p>智能成績錄入<br/>自動排名計算</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>成績排名</h3>
+                <p>個人班級排名<br/>詳細統計分析</p>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="http://localhost:8080" class="button" target="_blank">
+                🚀 打開運動會系統
+            </a>
+            <a href="#" class="button" onclick="checkSystem()">
+                🔄 重新檢查系統
+            </a>
+        </div>
+
+        <iframe src="http://localhost:8080" id="systemFrame"></iframe>
+    </div>
+
+    <script>
+        function checkSystem() {
+            const statusDiv = document.getElementById('systemStatus');
+            const frame = document.getElementById('systemFrame');
+            
+            statusDiv.innerHTML = '<div class="status-icon">⏳</div><div>正在檢查系統狀態...</div>';
+            statusDiv.className = 'status';
+
+            fetch('http://localhost:8080')
+                .then(response => {
+                    if (response.ok) {
+                        statusDiv.innerHTML = '<div class="status-icon">✅</div><div>系統運行正常！可以開始使用運動會管理功能。</div>';
+                        statusDiv.className = 'status';
+                        frame.src = 'http://localhost:8080';
+                    } else {
+                        throw new Error('系統響應異常');
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = '<div class="status-icon">❌</div><div>系統連接失敗，請檢查 Flutter 服務是否正在運行。</div>';
+                    statusDiv.className = 'status error';
+                });
+        }
+
+        // 頁面載入時自動檢查
+        window.onload = function() {
+            setTimeout(checkSystem, 1000);
+        };
+    </script>
+</body>
+</html>
+

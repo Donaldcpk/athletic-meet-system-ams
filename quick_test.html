@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>運動會系統連接測試</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            background: #1976d2;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 10px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #1565c0;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        .error { background: #ffebee; color: #c62828; }
+        .warning { background: #fff3e0; color: #ef6c00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 運動會系統連接測試</h1>
+        
+        <div id="status" class="status warning">
+            正在測試連接...
+        </div>
+
+        <p>如果看到這個頁面，說明您的瀏覽器工作正常。</p>
+
+        <div>
+            <a href="http://localhost:8080" class="btn" target="_blank">
+                🚀 打開運動會系統
+            </a>
+            
+            <a href="http://127.0.0.1:8080" class="btn" target="_blank">
+                🔄 備用連接
+            </a>
+        </div>
+
+        <h3>🔧 如果無法訪問，請嘗試：</h3>
+        <ol style="text-align: left; margin: 20px auto; max-width: 400px;">
+            <li>按 <kbd>Ctrl+Shift+R</kbd> (Windows) 或 <kbd>Cmd+Shift+R</kbd> (Mac) 強制刷新</li>
+            <li>嘗試無痕模式</li>
+            <li>檢查是否有其他軟件佔用8080端口</li>
+            <li>嘗試重啟瀏覽器</li>
+        </ol>
+
+        <div id="connection-test" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        // 測試連接
+        async function testConnection() {
+            const statusDiv = document.getElementById('status');
+            const testDiv = document.getElementById('connection-test');
+            
+            try {
+                const response = await fetch('http://localhost:8080', {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = '✅ Flutter應用服務器正在運行！';
+                testDiv.innerHTML = '<p style="color: green;">連接測試成功，點擊上方按鈕即可訪問系統。</p>';
+                
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = '❌ 無法連接到Flutter應用';
+                testDiv.innerHTML = `
+                    <p style="color: red;">連接失敗，可能的原因：</p>
+                    <ul style="text-align: left; color: #666;">
+                        <li>Flutter應用未啟動</li>
+                        <li>端口8080被其他程序佔用</li>
+                        <li>防火牆阻止連接</li>
+                    </ul>
+                `;
+            }
+        }
+
+        // 頁面載入時測試連接
+        testConnection();
+        
+        // 每5秒重新測試
+        setInterval(testConnection, 5000);
+    </script>
+</body>
+</html>
+

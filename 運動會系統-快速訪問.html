@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 香港中學運動會管理系統</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            color: #1976d2;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #1976d2, #42a5f5);
+            color: white;
+            padding: 18px 36px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(25, 118, 210, 0.4);
+        }
+        .status {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .feature {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #1976d2;
+        }
+        .port-info {
+            background: #fff3e0;
+            color: #ef6c00;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 香港中學運動會管理系統</h1>
+        
+        <div class="status">
+            🔧 編譯錯誤已修復！系統運行正常！
+        </div>
+
+        <div class="port-info">
+            📍 新地址：http://localhost:3000
+        </div>
+
+        <a href="http://localhost:3000" class="btn" target="_blank">
+            🚀 立即進入運動會系統
+        </a>
+
+        <div style="margin-top: 30px;">
+            <h3>🎯 系統功能</h3>
+            
+            <div class="feature">
+                👥 <strong>學生管理</strong> - CSV批量匯入、學生編號、報名管理
+            </div>
+            
+            <div class="feature">
+                🏃 <strong>項目管理</strong> - 田徑賽事、甲乙丙組分流、項目統計
+            </div>
+            
+            <div class="feature">
+                📊 <strong>裁判計分</strong> - 智能成績錄入、自動排名、四階段管理
+            </div>
+            
+            <div class="feature">
+                🏆 <strong>成績排名</strong> - 個人班級排名、統計分析、三甲名單
+            </div>
+        </div>
+
+        <div style="margin-top: 25px; color: #666; font-size: 0.9em;">
+            <p>✨ 支援600+學生數據 | 📱 iPad和網頁完美適配</p>
+            <p>🎯 完全符合香港中學運動會標準</p>
+        </div>
+    </div>
+
+    <script>
+        // 自動測試連接
+        fetch('http://localhost:3000', {method: 'HEAD', mode: 'no-cors'})
+            .then(() => {
+                document.querySelector('.status').innerHTML = '✅ 系統運行正常，隨時可以使用！';
+            })
+            .catch(() => {
+                document.querySelector('.status').innerHTML = '⚠️ 系統正在啟動中，請稍候...';
+                document.querySelector('.status').style.background = '#fff3e0';
+                document.querySelector('.status').style.color = '#ef6c00';
+            });
+    </script>
+</body>
+</html>
+
