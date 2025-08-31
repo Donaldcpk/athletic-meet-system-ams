@@ -7,8 +7,11 @@ import 'screens/rankings_screen.dart';
 import 'screens/reports_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/enhanced_class_points_screen.dart';
-import 'screens/data_management_screen.dart';
+import 'screens/professional_data_management_screen.dart';
+import 'screens/login_screen.dart';
 import 'utils/app_state.dart';
+import 'services/user_service.dart';
+import 'services/operation_log_service.dart';
 
 void main() {
   runApp(const AthleticMeetSystemApp());
@@ -44,7 +47,7 @@ class AthleticMeetSystemApp extends StatelessWidget {
       '/rankings': (context) => const RankingsScreen(),
       '/reports': (context) => const ReportsScreen(),
       '/class_points': (context) => const EnhancedClassPointsScreen(),
-      '/data_management': (context) => const DataManagementScreen(),
+      '/data_management': (context) => const ProfessionalDataManagementScreen(),
     };
   }
 }
@@ -71,11 +74,25 @@ class _AppInitializerState extends State<AppInitializer> {
   Future<void> _initializeApp() async {
     try {
       setState(() {
+        _initializationStatus = '正在初始化系統...';
+      });
+
+      // 恢復用戶會話
+      UserService.restoreSession();
+      
+      setState(() {
         _initializationStatus = '正在加載數據...';
       });
 
       // 初始化應用狀態
       await AppState().initialize();
+      
+      setState(() {
+        _initializationStatus = '正在加載操作日誌...';
+      });
+      
+      // 載入操作日誌
+      OperationLogService.loadFromLocal();
 
       setState(() {
         _initializationStatus = '初始化完成';
@@ -86,17 +103,34 @@ class _AppInitializerState extends State<AppInitializer> {
       await Future.delayed(const Duration(milliseconds: 500));
       
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        // 檢查用戶是否已登入
+        if (UserService.isLoggedIn) {
+          // 記錄自動登入
+          await OperationLogService.logOperation(
+            OperationType.login,
+            '用戶恢復會話',
+          );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          );
+        } else {
+          // 前往登入頁面
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        }
       }
     } catch (e) {
       setState(() {
         _initializationStatus = '初始化失敗: $e';
       });
       
-      // 顯示錯誤後仍然跳轉
+      // 顯示錯誤後仍然跳轉到登入頁面
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
       }
     }
   }

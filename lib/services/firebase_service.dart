@@ -233,4 +233,44 @@ class FirebaseService {
       };
     }
   }
+  
+  /// 上傳操作日誌
+  static Future<bool> uploadOperationLog(dynamic operationLog) async {
+    try {
+      final logData = operationLog.toJson();
+      
+      final response = await html.HttpRequest.request(
+        '${getFirebaseUrl()}operation_logs/${logData['id']}.json',
+        method: 'PUT',
+        requestHeaders: {'Content-Type': 'application/json'},
+        sendData: json.encode(logData),
+      );
+      
+      return response.status == 200;
+    } catch (e) {
+      print('❌ 上傳操作日誌失敗: $e');
+      return false;
+    }
+  }
+  
+  /// 下載操作日誌
+  static Future<List<dynamic>?> downloadOperationLogs() async {
+    try {
+      final response = await html.HttpRequest.request(
+        '${getFirebaseUrl()}operation_logs.json',
+        method: 'GET',
+      );
+      
+      if (response.status == 200 && response.responseText != null) {
+        final data = json.decode(response.responseText!);
+        if (data is Map) {
+          return data.values.toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      print('❌ 下載操作日誌失敗: $e');
+      return null;
+    }
+  }
 }
