@@ -6,6 +6,7 @@ import '../models/student.dart';
 import '../constants/event_constants.dart';
 import '../utils/app_state.dart';
 import '../widgets/add_event_dialog.dart';
+import '../widgets/common_app_bar.dart';
 
 /// 項目管理頁面
 class EventManagementScreen extends StatefulWidget {
@@ -57,10 +58,10 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('運動項目管理'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+      appBar: CommonAppBar(
+        title: '運動項目管理',
+        showBackButton: true,
+        backRoute: '/dashboard',
         actions: [
           IconButton(
             icon: const Icon(Icons.add_circle),

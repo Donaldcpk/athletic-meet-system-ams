@@ -6,6 +6,7 @@ import '../models/student.dart';
 import '../utils/app_state.dart';
 import '../constants/app_constants.dart';
 import '../constants/event_constants.dart';
+import '../widgets/common_app_bar.dart';
 
 /// 成績排名頁面
 class RankingsScreen extends StatefulWidget {
@@ -48,35 +49,45 @@ class _RankingsScreenState extends State<RankingsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('成績排名'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.person), text: '個人排名'),
-            Tab(icon: Icon(Icons.school), text: '班分統計'),
-            Tab(icon: Icon(Icons.emoji_events), text: '頒獎名單'),
-            Tab(icon: Icon(Icons.card_giftcard), text: '頒獎資料'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight + kTextTabBarHeight),
+        child: Column(
+          children: [
+            CommonAppBar(
+              title: '成績排名',
+              showBackButton: true,
+              backRoute: '/dashboard',
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.file_download),
+                  onPressed: _exportRankings,
+                  tooltip: '匯出排名',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _refreshData,
+                  tooltip: '重新計算',
+                ),
+              ],
+            ),
+            Container(
+              color: Theme.of(context).primaryColor,
+              child: TabBar(
+                controller: _tabController,
+                indicatorColor: Colors.white,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                isScrollable: true,
+                tabs: const [
+                  Tab(icon: Icon(Icons.person), text: '個人排名'),
+                  Tab(icon: Icon(Icons.school), text: '班分統計'),
+                  Tab(icon: Icon(Icons.emoji_events), text: '頒獎名單'),
+                  Tab(icon: Icon(Icons.card_giftcard), text: '頒獎資料'),
+                ],
+              ),
+            ),
           ],
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          isScrollable: true,
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.file_download),
-            onPressed: _exportRankings,
-            tooltip: '匯出排名',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshData,
-            tooltip: '重新計算',
-          ),
-        ],
       ),
       body: Column(
         children: [

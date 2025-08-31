@@ -6,6 +6,7 @@ import '../utils/app_state.dart';
 import '../constants/event_constants.dart';
 import '../constants/app_constants.dart';
 import '../widgets/enhanced_sidebar_navigation.dart';
+import '../services/operation_log_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -429,13 +430,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildActivityItem('男甲800m 成績已確認', '2分鐘前', Icons.check_circle, Colors.green),
-          _buildActivityItem('女乙跳遠 決賽名單已生成', '5分鐘前', Icons.list, Colors.blue),
-          _buildActivityItem('4x100m接力 成績錄入完成', '8分鐘前', Icons.groups, Colors.orange),
-          _buildActivityItem('1A班 新增3位參賽者', '12分鐘前', Icons.person_add, Colors.purple),
+          ..._buildRecentLogItems(),
         ],
       ),
     );
+  }
+
+  /// 構建真實的操作日誌項目
+  List<Widget> _buildRecentLogItems() {
+    final recentLogs = OperationLogService.getLogs(limit: 4);
+    
+    if (recentLogs.isEmpty) {
+      return [
+        Padding(
+          padding: const EdgeInsets.all(32),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.history, color: Colors.grey[400], size: 32),
+                const SizedBox(height: 8),
+                Text(
+                  '暫無操作記錄',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ];
+    }
+    
+    return recentLogs.map((log) {
+      return _buildActivityItem(
+        log.description,
+        log.timeDisplay,
+        _getLogIcon(log.type),
+        _getLogColor(log.type),
+      );
+    }).toList();
+  }
+  
+  /// 獲取操作類型圖標
+  IconData _getLogIcon(OperationType type) {
+    switch (type) {
+      case OperationType.create:
+        return Icons.add_circle;
+      case OperationType.update:
+        return Icons.edit;
+      case OperationType.delete:
+        return Icons.delete;
+      case OperationType.import:
+        return Icons.file_upload;
+      case OperationType.export:
+        return Icons.file_download;
+      case OperationType.login:
+        return Icons.login;
+      case OperationType.logout:
+        return Icons.logout;
+      case OperationType.rollback:
+        return Icons.undo;
+      default:
+        return Icons.info;
+    }
+  }
+  
+  /// 獲取操作類型顏色
+  Color _getLogColor(OperationType type) {
+    switch (type) {
+      case OperationType.create:
+        return Colors.green;
+      case OperationType.update:
+        return Colors.orange;
+      case OperationType.delete:
+        return Colors.red;
+      case OperationType.import:
+        return Colors.blue;
+      case OperationType.export:
+        return Colors.purple;
+      case OperationType.login:
+        return Colors.teal;
+      case OperationType.logout:
+        return Colors.grey;
+      case OperationType.rollback:
+        return Colors.amber;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildActivityItem(String title, String time, IconData icon, Color color) {

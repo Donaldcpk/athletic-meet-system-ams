@@ -11,6 +11,8 @@ import '../models/event.dart' as EventModel show EventType, EventCategory;
 import '../constants/event_constants.dart';
 import '../constants/app_constants.dart';
 import '../utils/app_state.dart';
+import '../widgets/common_app_bar.dart';
+import '../services/operation_log_service.dart';
 
 /// 裁判系統主界面
 class RefereeSystemScreen extends StatefulWidget {
@@ -71,22 +73,32 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('裁判系統'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.timer), text: '初賽成績'),
-            Tab(icon: Icon(Icons.emoji_events), text: '決賽成績'),
-            Tab(icon: Icon(Icons.verified), text: '成績確認'),
-            Tab(icon: Icon(Icons.sports), text: '接力賽事'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight + kTextTabBarHeight),
+        child: Column(
+          children: [
+            const CommonAppBar(
+              title: '裁判系統',
+              showBackButton: true,
+              backRoute: '/dashboard',
+            ),
+            Container(
+              color: Theme.of(context).colorScheme.primary,
+              child: TabBar(
+                controller: _tabController,
+                indicatorColor: Colors.white,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                isScrollable: true,
+                tabs: const [
+                  Tab(icon: Icon(Icons.timer), text: '初賽成績'),
+                  Tab(icon: Icon(Icons.emoji_events), text: '決賽成績'),
+                  Tab(icon: Icon(Icons.verified), text: '成績確認'),
+                  Tab(icon: Icon(Icons.sports), text: '接力賽事'),
+                ],
+              ),
+            ),
           ],
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          isScrollable: true,
         ),
       ),
       body: Column(
@@ -438,21 +450,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                             DataCell(
                               SizedBox(
                                 width: 150,
-                                child: TextField(
-                                  decoration: InputDecoration(
-                                    border: const OutlineInputBorder(),
-                                    hintText: _getHintForEvent(event),
-                                    isDense: true,
-                                  ),
-                                  onChanged: (value) {
-                                    _preliminaryResults[resultKey] = value;
-                                  },
-                                  inputFormatters: [
-                                    if (event.category == EventCategory.track)
-                                      FilteringTextInputFormatter.allow(RegExp(r'[\d\.:]+'))
-                                    else
-                                      FilteringTextInputFormatter.allow(RegExp(r'[\d\.]+'))
-                                  ],
+                                child: _buildResultTextField(
+                                  resultKey: resultKey,
+                                  isInitial: true,
+                                  event: event,
                                 ),
                               ),
                             ),
@@ -958,20 +959,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           DataCell(
             SizedBox(
               width: 120,
-              child: TextField(
-                controller: TextEditingController(text: finalsResult),
-                decoration: InputDecoration(
-                  hintText: event.category == EventCategory.track ? '12.34' : '5.67',
-                  border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  isDense: true,
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  setState(() {
-                    _finalsResults[finalsKey] = value;
-                  });
-                },
+              child: _buildResultTextField(
+                resultKey: finalsKey,
+                isInitial: false,
+                event: event,
               ),
             ),
           ),
@@ -1805,6 +1796,59 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
+  /// 構建成績輸入框
+  Widget _buildResultTextField({
+    required String resultKey,
+    required bool isInitial,
+    required EventInfo event,
+  }) {
+    final isDNF = _dnfStatus[resultKey] ?? false;
+    final isDQ = _dqStatus[resultKey] ?? false;
+    final isABS = _absStatus[resultKey] ?? false;
+    
+    final hasSpecialStatus = isDNF || isDQ || isABS;
+    final statusText = isDNF ? 'DNF' : (isDQ ? 'DQ' : (isABS ? 'ABS' : ''));
+    
+    final resultValue = isInitial 
+        ? (_preliminaryResults[resultKey] ?? '')
+        : (_finalsResults[resultKey] ?? '');
+    
+    return TextField(
+      controller: TextEditingController(
+        text: hasSpecialStatus ? statusText : resultValue,
+      ),
+      enabled: !hasSpecialStatus,
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(),
+        hintText: hasSpecialStatus ? '' : _getHintForEvent(event),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        filled: hasSpecialStatus,
+        fillColor: hasSpecialStatus ? Colors.grey[200] : null,
+      ),
+      style: TextStyle(
+        color: hasSpecialStatus ? Colors.grey[600] : Colors.black,
+        fontWeight: hasSpecialStatus ? FontWeight.bold : FontWeight.normal,
+      ),
+      keyboardType: hasSpecialStatus ? null : TextInputType.number,
+      onChanged: hasSpecialStatus ? null : (value) {
+        setState(() {
+          if (isInitial) {
+            _preliminaryResults[resultKey] = value;
+          } else {
+            _finalsResults[resultKey] = value;
+          }
+        });
+      },
+      inputFormatters: hasSpecialStatus ? null : [
+        if (event.category == EventCategory.track)
+          FilteringTextInputFormatter.allow(RegExp(r'[\d\.:]+'))
+        else
+          FilteringTextInputFormatter.allow(RegExp(r'[\d\.]+'))
+      ],
+    );
+  }
+
   /// 切換狀態（DNF/DQ/ABS）
   void _toggleStatus(String resultKey, String statusType) {
     setState(() {
@@ -1814,6 +1858,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           if (_dnfStatus[resultKey] == true) {
             _dqStatus[resultKey] = false;
             _absStatus[resultKey] = false;
+            // 清除原有成績
+            _preliminaryResults[resultKey] = '';
+            _finalsResults[resultKey] = '';
           }
           break;
         case 'DQ':
@@ -1821,6 +1868,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           if (_dqStatus[resultKey] == true) {
             _dnfStatus[resultKey] = false;
             _absStatus[resultKey] = false;
+            // 清除原有成績
+            _preliminaryResults[resultKey] = '';
+            _finalsResults[resultKey] = '';
           }
           break;
         case 'ABS':
@@ -1828,6 +1878,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           if (_absStatus[resultKey] == true) {
             _dnfStatus[resultKey] = false;
             _dqStatus[resultKey] = false;
+            // 清除原有成績
+            _preliminaryResults[resultKey] = '';
+            _finalsResults[resultKey] = '';
           }
           break;
       }

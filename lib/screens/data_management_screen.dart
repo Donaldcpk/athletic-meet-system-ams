@@ -817,6 +817,12 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
 
     if (confirmed == true) {
       try {
+        // 記錄操作日誌
+        await OperationLogService.logOperation(
+          OperationType.delete,
+          '清除所有系統數據（本地+雲端）',
+        );
+        
         await _appState.clearAllStorageData();
         await _syncService.broadcastDataUpdate('all', 'cleared');
         await _syncService.broadcastUserAction('清除了所有數據');
@@ -824,7 +830,7 @@ class _DataManagementScreenState extends State<DataManagementScreen> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ 所有數據已清除'),
+            content: Text('✅ 所有數據已清除（包括Firebase雲端數據）'),
             backgroundColor: Colors.orange,
           ),
         );

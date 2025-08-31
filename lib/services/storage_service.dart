@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:html' as html;
 import '../models/student.dart';
 import '../models/referee_models.dart';
+import 'firebase_service.dart';
 
 class StorageService {
   static const String _studentsKey = 'athletic_meet_students';
@@ -163,17 +164,40 @@ class StorageService {
     }
   }
   
-  /// 清除所有數據
+  /// 清除所有數據（包括Firebase）
   static Future<void> clearAllData() async {
     try {
+      // 清除本地數據
       html.window.localStorage.remove(_studentsKey);
       html.window.localStorage.remove(_scoresKey);
       html.window.localStorage.remove(_finalistsKey);
       html.window.localStorage.remove(_podiumKey);
       html.window.localStorage.remove(_lastSyncKey);
-      print('✅ 已清除所有本地數據');
+      
+      // 清除Firebase數據
+      await _clearFirebaseData();
+      
+      print('✅ 已清除所有本地和雲端數據');
     } catch (e) {
       print('❌ 清除數據失敗: $e');
+    }
+  }
+  
+  /// 清除Firebase數據
+  static Future<void> _clearFirebaseData() async {
+    try {
+      // 測試連接
+      final connected = await FirebaseService.testConnection();
+      if (!connected) {
+        print('⚠️ Firebase未連接，跳過雲端數據清除');
+        return;
+      }
+      
+      // 清除各類數據
+      await FirebaseService.clearAllData();
+      print('✅ 已清除Firebase數據');
+    } catch (e) {
+      print('❌ 清除Firebase數據失敗: $e');
     }
   }
   

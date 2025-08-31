@@ -273,4 +273,51 @@ class FirebaseService {
       return null;
     }
   }
+  
+  /// 清除所有Firebase數據
+  static Future<bool> clearAllData() async {
+    try {
+      // 清除學生數據
+      await html.HttpRequest.request(
+        '${getFirebaseUrl()}students.json',
+        method: 'DELETE',
+      );
+      
+      // 清除成績數據
+      await html.HttpRequest.request(
+        '${getFirebaseUrl()}scores.json',
+        method: 'DELETE',
+      );
+      
+      // 清除決賽名單
+      await html.HttpRequest.request(
+        '${getFirebaseUrl()}finalists.json',
+        method: 'DELETE',
+      );
+      
+      // 清除三甲名單
+      await html.HttpRequest.request(
+        '${getFirebaseUrl()}podium.json',
+        method: 'DELETE',
+      );
+      
+      // 清除操作日誌
+      await html.HttpRequest.request(
+        '${getFirebaseUrl()}operation_logs.json',
+        method: 'DELETE',
+      );
+      
+      // 清除所有數據的根路徑
+      await html.HttpRequest.request(
+        '${getFirebaseUrl()}athletic_meet_data.json',
+        method: 'DELETE',
+      );
+      
+      print('✅ 已清除所有Firebase數據');
+      return true;
+    } catch (e) {
+      print('❌ 清除Firebase數據失敗: $e');
+      return false;
+    }
+  }
 }
