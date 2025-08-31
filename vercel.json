@@ -1,31 +1,12 @@
 {
-  "name": "athletic-meet-system",
-  "version": 2,
-  "public": false,
   "buildCommand": "flutter build web",
   "outputDirectory": "build/web",
-  "installCommand": "curl -fsSL https://flutter.dev/docs/get-started/install > /dev/null && export PATH=\"$PATH:/opt/flutter/bin\" && flutter pub get",
+  "installCommand": "flutter pub get",
   "framework": null,
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
-  "headers": [
+  "rewrites": [
     {
       "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cross-Origin-Embedder-Policy",
-          "value": "require-corp"
-        },
-        {
-          "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin"
-        }
-      ]
+      "destination": "/index.html"
     }
   ]
 }
-
