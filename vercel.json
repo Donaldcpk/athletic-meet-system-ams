@@ -1,4 +1,14 @@
 {
+  "builds": [
+    {
+      "src": "**",
+      "use": "@vercel/static"
+    }
+  ],
+  "installCommand": "",
+  "buildCommand": "",
+  "devCommand": "",
+  "outputDirectory": ".",
   "rewrites": [
     {
       "source": "/(.*)",
