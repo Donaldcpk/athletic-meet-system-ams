@@ -31,7 +31,7 @@ class _RankingsScreenState extends State<RankingsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 2, vsync: this); // 改為2個標籤頁
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -79,10 +79,8 @@ class _RankingsScreenState extends State<RankingsScreen>
                 unselectedLabelColor: Colors.white70,
                 isScrollable: true,
                 tabs: const [
-                  Tab(icon: Icon(Icons.person), text: '個人排名'),
-                  Tab(icon: Icon(Icons.school), text: '班分統計'),
+                  Tab(icon: Icon(Icons.analytics), text: '個人及班別成績統計'),
                   Tab(icon: Icon(Icons.emoji_events), text: '頒獎名單'),
-                  Tab(icon: Icon(Icons.card_giftcard), text: '頒獎資料'),
                 ],
               ),
             ),
@@ -96,10 +94,8 @@ class _RankingsScreenState extends State<RankingsScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildIndividualRankingView(),
-                _buildClassPointsView(),
+                _buildCombinedRankingsView(), // 合併的個人及班別統計
                 _buildAwardListView(),
-                _buildAwardDataView(),
               ],
             ),
           ),
@@ -215,6 +211,86 @@ class _RankingsScreenState extends State<RankingsScreen>
     );
   }
 
+  /// 建構合併的個人及班別成績統計視圖
+  Widget _buildCombinedRankingsView() {
+    return Row(
+      children: [
+        // 左側：個人排名
+        Expanded(
+          flex: 3,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            margin: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '個人排名',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(child: _buildIndividualRankingView()),
+              ],
+            ),
+          ),
+        ),
+        // 右側：班分統計
+        Expanded(
+          flex: 2,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            margin: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.school, color: Colors.green),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '班分統計',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(child: _buildEnhancedClassPointsView()),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   /// 個人排名界面
   Widget _buildIndividualRankingView() {
     final rankings = _calculateIndividualRankings(_getFilteredStudents());
@@ -254,6 +330,138 @@ class _RankingsScreenState extends State<RankingsScreen>
     );
   }
 
+  /// 增強版班分統計視圖（包含垂直加總）
+  Widget _buildEnhancedClassPointsView() {
+    final classStats = _calculateEnhancedClassStats();
+    
+    return Container(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        children: [
+          // 統計表格
+          Expanded(
+            child: SingleChildScrollView(
+              child: DataTable(
+                columnSpacing: 8,
+                headingRowHeight: 35,
+                dataRowHeight: 30,
+                columns: const [
+                  DataColumn(
+                    label: Text('班別', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                  DataColumn(
+                    label: Text('參與分', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    numeric: true,
+                  ),
+                  DataColumn(
+                    label: Text('決賽分', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    numeric: true,
+                  ),
+                  DataColumn(
+                    label: Text('總分', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    numeric: true,
+                  ),
+                ],
+                rows: [
+                  // 各班級數據
+                  ...classStats.entries.map((entry) {
+                    final classId = entry.key;
+                    final stats = entry.value;
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(classId, style: const TextStyle(fontSize: 11))),
+                        DataCell(Text('${stats['participation']}', style: const TextStyle(fontSize: 11))),
+                        DataCell(Text('${stats['finals']}', style: const TextStyle(fontSize: 11))),
+                        DataCell(
+                          Text(
+                            '${stats['total']}',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  // 垂直加總行
+                  DataRow(
+                    color: MaterialStateProperty.all(Colors.amber[100]),
+                    cells: [
+                      const DataCell(
+                        Text(
+                          '總計',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          '${_calculateColumnTotal(classStats, 'participation')}',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          '${_calculateColumnTotal(classStats, 'finals')}',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          '${_calculateColumnTotal(classStats, 'total')}',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 計算列總和
+  int _calculateColumnTotal(Map<String, Map<String, int>> classStats, String column) {
+    return classStats.values.map((stats) => stats[column] ?? 0).fold(0, (a, b) => a + b);
+  }
+
+  /// 計算增強版班級統計數據
+  Map<String, Map<String, int>> _calculateEnhancedClassStats() {
+    final stats = <String, Map<String, int>>{};
+    
+    // 獲取所有班級
+    final allClasses = _appState.students.map((s) => s.classId).toSet().toList();
+    allClasses.sort();
+    
+    // 初始化每個班級的統計
+    for (final classId in allClasses) {
+      stats[classId] = {
+        'participation': 0,
+        'finals': 0,
+        'total': 0,
+      };
+    }
+    
+    // 計算參與分（每參加一個項目得1分）
+    for (final student in _appState.students) {
+      final participationPoints = student.registeredEvents.length;
+      stats[student.classId]!['participation'] = 
+          (stats[student.classId]!['participation'] ?? 0) + participationPoints;
+    }
+    
+    // 計算決賽分（根據決賽排名得分）
+    // TODO: 這裡需要實際的決賽成績數據
+    
+    // 計算總分
+    for (final classId in allClasses) {
+      final participation = stats[classId]!['participation'] ?? 0;
+      final finals = stats[classId]!['finals'] ?? 0;
+      stats[classId]!['total'] = participation + finals;
+    }
+    
+    return stats;
+  }
+
   /// 班分統計界面（參考圖片的彩色表格）
   Widget _buildClassPointsView() {
     return Container(
@@ -288,69 +496,247 @@ class _RankingsScreenState extends State<RankingsScreen>
     );
   }
 
-  /// 頒獎名單界面
+  /// 完整的頒獎名單界面
   Widget _buildAwardListView() {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
+          // 標題和統計概覽
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.amber[50],
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber[200]!),
             ),
-            child: const Row(
+            child: Column(
               children: [
-                Icon(Icons.emoji_events, color: Colors.amber),
-                SizedBox(width: 8),
-                Text(
-                  '頒獎名單',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Row(
+                  children: [
+                    const Icon(Icons.emoji_events, color: Colors.amber, size: 28),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '頒獎名單',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '生成時間：${DateTime.now().toString().substring(0, 16)}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildAwardStat('個人項目', '${_getIndividualEventCount()}', Colors.blue),
+                    _buildAwardStat('接力項目', '${_getRelayEventCount()}', Colors.green),
+                    _buildAwardStat('總獎項', '${_getTotalAwardsCount()}', Colors.orange),
+                    _buildAwardStat('獲獎人次', '${_getWinnerCount()}', Colors.purple),
+                  ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
+          // 頒獎名單表格
           Expanded(
-            child: _buildAwardListTable(),
+            child: _buildCompleteAwardListTable(),
           ),
         ],
       ),
     );
   }
 
-  /// 頒獎資料界面
-  Widget _buildAwardDataView() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.purple[50],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.card_giftcard, color: Colors.purple),
-                SizedBox(width: 8),
-                Text(
-                  '頒獎資料統計',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
+  /// 構建獎項統計卡片
+  Widget _buildAwardStat(String title, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: color,
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _buildAwardDataSummary(),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
           ),
+        ),
+      ],
+    );
+  }
+
+  /// 獲取個人項目數量
+  int _getIndividualEventCount() {
+    return 12; // 假設有12個個人項目
+  }
+
+  /// 獲取接力項目數量
+  int _getRelayEventCount() {
+    return 6; // 假設有6個接力項目
+  }
+
+  /// 獲取總獎項數量
+  int _getTotalAwardsCount() {
+    return (_getIndividualEventCount() + _getRelayEventCount()) * 3; // 每個項目3個獎項
+  }
+
+  /// 獲取獲獎人次
+  int _getWinnerCount() {
+    // TODO: 從實際三甲名單計算
+    return _getTotalAwardsCount();
+  }
+
+  /// 完整的頒獎名單表格
+  Widget _buildCompleteAwardListTable() {
+    final awards = _generateCompleteAwardList();
+    
+    return SingleChildScrollView(
+      child: DataTable(
+        columnSpacing: 12,
+        headingRowHeight: 40,
+        dataRowHeight: 50,
+        columns: const [
+          DataColumn(label: Text('項目', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('名次', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('參賽編號', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('姓名', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('班別', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('成績', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('獎項', style: TextStyle(fontWeight: FontWeight.bold))),
+          DataColumn(label: Text('狀態', style: TextStyle(fontWeight: FontWeight.bold))),
         ],
+        rows: awards.map((award) {
+          return DataRow(
+            color: MaterialStateProperty.resolveWith<Color?>(
+              (Set<MaterialState> states) {
+                if (award['rank'] == 1) return Colors.amber[50];
+                if (award['rank'] == 2) return Colors.grey[100];
+                if (award['rank'] == 3) return Colors.orange[50];
+                return null;
+              },
+            ),
+            cells: [
+              DataCell(Text(award['eventName'] ?? '')),
+              DataCell(
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getRankColor(award['rank']),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_getRankEmoji(award['rank'])} ${award['rank']}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              DataCell(Text(award['studentCode'] ?? '')),
+              DataCell(Text(award['studentName'] ?? '')),
+              DataCell(Text(award['classId'] ?? '')),
+              DataCell(
+                Text(
+                  award['result'] ?? '--',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+              DataCell(
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.purple[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _getAwardType(award['rank']),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.purple[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              DataCell(
+                Icon(
+                  award['completed'] ? Icons.check_circle : Icons.pending,
+                  color: award['completed'] ? Colors.green : Colors.orange,
+                ),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
+
+  /// 生成完整的頒獎名單
+  List<Map<String, dynamic>> _generateCompleteAwardList() {
+    final awards = <Map<String, dynamic>>[];
+    
+    // TODO: 從實際的三甲名單數據生成
+    // 這裡先生成示例數據
+    final sampleEvents = ['男甲100m', '女甲100m', '男乙跳遠', '女乙跳遠', '4x100m接力'];
+    for (int i = 0; i < sampleEvents.length; i++) {
+      final eventName = sampleEvents[i];
+      for (int rank = 1; rank <= 3; rank++) {
+        awards.add({
+          'eventName': eventName,
+          'rank': rank,
+          'studentCode': 'S${rank}A${String.fromCharCode(48 + rank)}',
+          'studentName': '示例學生$rank',
+          'classId': '${rank}A',
+          'result': rank == 1 ? '12.34' : (rank == 2 ? '12.56' : '12.78'),
+          'completed': rank <= 2,
+        });
+      }
+    }
+    
+    return awards;
+  }
+
+  /// 獲取排名顏色
+  Color _getRankColor(int rank) {
+    switch (rank) {
+      case 1: return Colors.amber[600]!;
+      case 2: return Colors.grey[600]!;
+      case 3: return Colors.orange[600]!;
+      default: return Colors.blue[600]!;
+    }
+  }
+
+  /// 獲取排名表情符號
+  String _getRankEmoji(int rank) {
+    switch (rank) {
+      case 1: return '🥇';
+      case 2: return '🥈';
+      case 3: return '🥉';
+      default: return '';
+    }
+  }
+
+  /// 獲取獎項類型
+  String _getAwardType(int rank) {
+    switch (rank) {
+      case 1: return '金獎';
+      case 2: return '銀獎';
+      case 3: return '銅獎';
+      default: return '參與獎';
+    }
+  }
+
+
 
   /// 學生排名卡片
   Widget _buildStudentRankingCard(StudentRanking ranking, int rank) {

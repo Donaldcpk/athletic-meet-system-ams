@@ -61,6 +61,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         _searchQuery = _searchController.text;
       });
     });
+    
+    // 載入已儲存的成績數據
+    _loadResultsData();
   }
 
   @override
@@ -580,10 +583,51 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   /// 成績確認界面
   Widget _buildResultsConfirmationView() {
     return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+      padding: const EdgeInsets.all(16),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 項目選擇和名稱顯示
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue[200]!),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.verified, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Text(
+                      _selectedEvent != null 
+                          ? '${_selectedEvent!.name} - 成績確認'
+                          : '成績確認',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                if (_selectedEvent != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '項目代碼：${_selectedEvent!.code} | '
+                    '類型：${_selectedEvent!.category == EventCategory.track ? '徑賽' : '田賽'} | '
+                    '組別：${_selectedEvent!.divisions.map((d) => d.name).join('、')}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -622,17 +666,24 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           
           // 決賽名單和三甲名單並排顯示
           Expanded(
-                      child: Row(
-                        children: [
-                Expanded(
-                  child: _buildFinalistsList(),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildPodiumList(),
-                                ),
-                              ],
-                            ),
+            child: _selectedEvent != null 
+                ? Row(
+                    children: [
+                      Expanded(
+                        child: _buildFinalistsList(),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildPodiumList(),
+                      ),
+                    ],
+                  )
+                : const Center(
+                    child: Text(
+                      '請先選擇一個項目',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -743,30 +794,234 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
 
   /// 三甲名單列表
   Widget _buildPodiumList() {
-    if (_selectedEvent == null || _podiumResults[_selectedEvent!.code] == null) {
+    if (_selectedEvent == null) {
       return const Center(
-        child: Text('暫無三甲名單', style: TextStyle(color: Colors.grey)),
+        child: Text('請先選擇項目', style: TextStyle(color: Colors.grey)),
       );
     }
     
-    final podium = _podiumResults[_selectedEvent!.code]!;
+    final podium = _podiumResults[_selectedEvent!.code];
     
-    return ListView.builder(
-      itemCount: podium.length,
-      itemBuilder: (context, index) {
-        final winner = podium[index];
-        final medals = ['🥇', '🥈', '🥉'];
-        
-        return ListTile(
-          leading: Text(
-            index < medals.length ? medals[index] : '${index + 1}',
-            style: const TextStyle(fontSize: 24),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          // 標題欄
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.green[50],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.emoji_events, color: Colors.green),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${_selectedEvent!.name} - 三甲名單',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '生成時間：${DateTime.now().toString().substring(0, 16)}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+                Text(
+                  '項目代碼：${_selectedEvent!.code} | '
+                  '類型：${_selectedEvent!.category == EventCategory.track ? '徑賽' : '田賽'}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
           ),
-          title: Text(winner.studentName),
-          subtitle: Text('${winner.studentCode} - 成績: ${winner.finalResult}'),
-          trailing: Text('${winner.points}分'),
-        );
-      },
+          
+          // 三甲名單內容
+          Expanded(
+            child: podium == null || podium.isEmpty
+                ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.emoji_events_outlined, 
+                             color: Colors.grey, size: 48),
+                        SizedBox(height: 16),
+                        Text('暫無三甲名單', 
+                             style: TextStyle(color: Colors.grey, fontSize: 16)),
+                        SizedBox(height: 8),
+                        Text('請先完成決賽並生成成績', 
+                             style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      ],
+                    ),
+                  )
+                : DataTable(
+                    columnSpacing: 12,
+                    headingRowHeight: 40,
+                    dataRowHeight: 80,
+                    columns: const [
+                      DataColumn(label: Text('名次', style: TextStyle(fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text('參賽編號', style: TextStyle(fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text('姓名', style: TextStyle(fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text('班別', style: TextStyle(fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text('學號', style: TextStyle(fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text('成績', style: TextStyle(fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text('頒獎組', style: TextStyle(fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text('存檔', style: TextStyle(fontWeight: FontWeight.bold))),
+                    ],
+                    rows: podium.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final winner = entry.value;
+                      final medals = ['🥇', '🥈', '🥉'];
+                      final student = _appState.students.firstWhere(
+                        (s) => s.id == winner.studentId,
+                        orElse: () => Student(
+                          id: winner.studentId,
+                          name: winner.studentName,
+                          classId: 'Unknown',
+                          studentNumber: '00',
+                          gender: Gender.male,
+                          division: Division.senior,
+                          grade: 1,
+                          dateOfBirth: DateTime.now(),
+                          isStaff: false,
+                        ),
+                      );
+                      
+                      return DataRow(
+                        color: MaterialStateProperty.resolveWith<Color?>(
+                          (Set<MaterialState> states) {
+                            if (index == 0) return Colors.amber[50];
+                            if (index == 1) return Colors.grey[100];
+                            if (index == 2) return Colors.orange[50];
+                            return null;
+                          },
+                        ),
+                        cells: [
+                          // 名次
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: index < 3 ? Colors.green[600] : Colors.blue[600],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                index < medals.length 
+                                    ? '${medals[index]} ${index + 1}'
+                                    : '${index + 1}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 參賽編號
+                          DataCell(
+                            Text(
+                              student.studentCode,
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                          // 姓名
+                          DataCell(Text(student.name)),
+                          // 班別
+                          DataCell(Text(student.classId)),
+                          // 學號
+                          DataCell(Text(student.studentNumber)),
+                          // 成績
+                          DataCell(
+                            Text(
+                              winner.finalResult.toString(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ),
+                          // 頒獎組核對按鈕
+                          DataCell(
+                            IconButton(
+                              icon: Icon(
+                                winner.submittedToAwards 
+                                    ? Icons.check_circle 
+                                    : Icons.radio_button_unchecked,
+                                color: winner.submittedToAwards 
+                                    ? Colors.green 
+                                    : Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  final updatedWinner = PodiumWinner(
+                                    studentId: winner.studentId,
+                                    studentName: winner.studentName,
+                                    studentCode: winner.studentCode,
+                                    isStaff: winner.isStaff,
+                                    result: winner.result,
+                                    finalResult: winner.finalResult,
+                                    points: winner.points,
+                                    submittedToAwards: !winner.submittedToAwards,
+                                    archived: winner.archived,
+                                  );
+                                  podium[index] = updatedWinner;
+                                  _saveResultsData();
+                                });
+                              },
+                              tooltip: winner.submittedToAwards 
+                                  ? '已提交頒獎組' 
+                                  : '提交至頒獎組',
+                            ),
+                          ),
+                          // 存檔核對按鈕
+                          DataCell(
+                            IconButton(
+                              icon: Icon(
+                                winner.archived 
+                                    ? Icons.archive 
+                                    : Icons.unarchive,
+                                color: winner.archived 
+                                    ? Colors.blue 
+                                    : Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  final updatedWinner = PodiumWinner(
+                                    studentId: winner.studentId,
+                                    studentName: winner.studentName,
+                                    studentCode: winner.studentCode,
+                                    isStaff: winner.isStaff,
+                                    result: winner.result,
+                                    finalResult: winner.finalResult,
+                                    points: winner.points,
+                                    submittedToAwards: winner.submittedToAwards,
+                                    archived: !winner.archived,
+                                  );
+                                  podium[index] = updatedWinner;
+                                  _saveResultsData();
+                                });
+                              },
+                              tooltip: winner.archived 
+                                  ? '已存檔' 
+                                  : '存檔',
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1767,11 +2022,11 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     htmlContent.writeln('</p>');
     htmlContent.writeln('</body></html>');
 
-    // 打開列印窗口並設置內容
+    // 打開新視窗進行列印
     try {
-      final printWindow = html.window.open('', '_blank', 'width=800,height=600');
+      final printWindow = html.window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
       if (printWindow != null) {
-        // 使用JavaScript字符串操作來設置內容
+        // 使用JavaScript在新視窗中寫入內容
         final jsCode = '''
           document.write(${json.encode(htmlContent.toString())});
           document.close();
@@ -1780,12 +2035,22 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           }, 500);
         ''';
         (printWindow as dynamic).eval(jsCode);
+        
+        print('✅ 已開啟新視窗進行列印');
+      } else {
+        throw Exception('無法開啟新視窗');
       }
     } catch (e) {
-      print('打開列印窗口失敗: $e');
+      print('❌ 開啟新視窗失敗: $e');
       // 降級方案：直接在當前窗口列印
+      final originalContent = html.document.body?.innerHtml;
       html.document.body?.innerHtml = htmlContent.toString();
       html.window.print();
+      
+      // 恢復原內容
+      if (originalContent != null) {
+        html.document.body?.innerHtml = originalContent;
+      }
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1813,10 +2078,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         ? (_preliminaryResults[resultKey] ?? '')
         : (_finalsResults[resultKey] ?? '');
     
-    return TextField(
-      controller: TextEditingController(
-        text: hasSpecialStatus ? statusText : resultValue,
-      ),
+    return TextFormField(
+      initialValue: hasSpecialStatus ? statusText : resultValue,
       enabled: !hasSpecialStatus,
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
@@ -1838,6 +2101,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           } else {
             _finalsResults[resultKey] = value;
           }
+          // 自動儲存數據
+          _saveResultsData();
         });
       },
       inputFormatters: hasSpecialStatus ? null : [
@@ -1887,6 +2152,83 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     });
   }
 
+  /// 自動儲存成績數據
+  void _saveResultsData() {
+    try {
+      // 儲存到本地存儲
+      final allResults = <String, dynamic>{
+        'preliminary': _preliminaryResults,
+        'finals': _finalsResults,
+        'dnf': _dnfStatus,
+        'dq': _dqStatus,
+        'abs': _absStatus,
+        'finalists': _finalists,
+        'podium': _podiumResults,
+      };
+      
+      html.window.localStorage['referee_results'] = json.encode(allResults);
+      
+      // 同步到AppState
+      _appState.notifyListeners();
+      
+      print('✅ 成績數據已自動儲存');
+    } catch (e) {
+      print('❌ 儲存成績數據失敗: $e');
+    }
+  }
+
+  /// 載入已儲存的成績數據
+  void _loadResultsData() {
+    try {
+      final savedData = html.window.localStorage['referee_results'];
+      if (savedData != null) {
+        final data = json.decode(savedData) as Map<String, dynamic>;
+        
+        setState(() {
+          _preliminaryResults.clear();
+          _finalsResults.clear();
+          _dnfStatus.clear();
+          _dqStatus.clear();
+          _absStatus.clear();
+          _finalists.clear();
+          _podiumResults.clear();
+          
+          if (data['preliminary'] != null) {
+            _preliminaryResults.addAll(Map<String, String>.from(data['preliminary']));
+          }
+          if (data['finals'] != null) {
+            _finalsResults.addAll(Map<String, String>.from(data['finals']));
+          }
+          if (data['dnf'] != null) {
+            _dnfStatus.addAll(Map<String, bool>.from(data['dnf']));
+          }
+          if (data['dq'] != null) {
+            _dqStatus.addAll(Map<String, bool>.from(data['dq']));
+          }
+          if (data['abs'] != null) {
+            _absStatus.addAll(Map<String, bool>.from(data['abs']));
+          }
+          if (data['finalists'] != null) {
+            final finalistsMap = Map<String, dynamic>.from(data['finalists']);
+            finalistsMap.forEach((key, value) {
+              _finalists[key] = List<String>.from(value);
+            });
+          }
+          if (data['podium'] != null) {
+            final podiumMap = Map<String, dynamic>.from(data['podium']);
+            podiumMap.forEach((key, value) {
+              _podiumResults[key] = (value as List).map((e) => PodiumWinner.fromJson(e)).toList();
+            });
+          }
+        });
+        
+        print('✅ 成績數據已載入');
+      }
+    } catch (e) {
+      print('❌ 載入成績數據失敗: $e');
+    }
+  }
+
   /// 清除篩選
   void _clearFilters() {
     setState(() {
@@ -1896,25 +2238,4 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       _searchController.clear();
     });
   }
-}
-
-/// 三甲得獎者模型
-class PodiumWinner {
-  final String studentId;
-  final String studentName;
-  final String studentCode;
-  final bool isStaff;
-  final double result;
-  final String finalResult;
-  final int points;
-
-  const PodiumWinner({
-    required this.studentId,
-    required this.studentName,
-    required this.studentCode,
-    required this.isStaff,
-    required this.result,
-    required this.finalResult,
-    required this.points,
-  });
 }
