@@ -339,10 +339,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildQuickActionCard('錄入成績', Icons.edit, Colors.blue, () {
                 Navigator.pushNamed(context, '/referee');
               }),
-              _buildQuickActionCard('查看排名', Icons.leaderboard, Colors.green, () {
-                Navigator.pushNamed(context, '/rankings');
-              }),
-              _buildQuickActionCard('班分統計', Icons.bar_chart, Colors.orange, () {
+              _buildQuickActionCard('個人及班別成績統計', Icons.analytics, Colors.green, () {
                 Navigator.pushNamed(context, '/rankings');
               }),
               _buildQuickActionCard('頒獎名單', Icons.emoji_events, Colors.purple, () {
