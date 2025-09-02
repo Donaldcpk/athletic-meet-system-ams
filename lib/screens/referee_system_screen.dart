@@ -47,6 +47,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   final Map<String, bool> _dqStatus = {}; // studentId_eventCode -> isDQ
   final Map<String, bool> _absStatus = {}; // studentId_eventCode -> isABS
   
+  // 成績輸入控制器 - 解決數據持久化問題
+  final Map<String, TextEditingController> _preliminaryControllers = {}; // resultKey -> controller
+  final Map<String, TextEditingController> _finalsControllers = {}; // resultKey -> controller
+  
   // 決賽晉級名單
   final Map<String, List<String>> _finalists = {}; // eventCode -> [studentId]
   final Map<String, List<PodiumWinner>> _podiumResults = {}; // eventCode -> [PodiumWinner]
@@ -54,7 +58,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this); // 增加為5個TAB
     
     _searchController.addListener(() {
       setState(() {
@@ -70,6 +74,17 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   void dispose() {
     _tabController.dispose();
     _searchController.dispose();
+    
+    // 釋放所有TextEditingController
+    for (final controller in _preliminaryControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _finalsControllers.values) {
+      controller.dispose();
+    }
+    _preliminaryControllers.clear();
+    _finalsControllers.clear();
+    
     super.dispose();
   }
 
@@ -88,14 +103,15 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             Container(
               color: Theme.of(context).colorScheme.primary,
               child: TabBar(
-                controller: _tabController,
-                indicatorColor: Colors.white,
+          controller: _tabController,
+          indicatorColor: Colors.white,
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white70,
                 isScrollable: true,
-                tabs: const [
+          tabs: const [
                   Tab(icon: Icon(Icons.timer), text: '初賽成績'),
                   Tab(icon: Icon(Icons.emoji_events), text: '決賽成績'),
+                  Tab(icon: Icon(Icons.military_tech), text: '三甲名單'),
                   Tab(icon: Icon(Icons.verified), text: '成績確認'),
                   Tab(icon: Icon(Icons.sports), text: '接力賽事'),
                 ],
@@ -113,6 +129,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
               children: [
                 _buildPreliminaryView(),
                 _buildFinalsView(),
+                _buildPodiumView(), // 新增：三甲名單頁面
                 _buildResultsConfirmationView(),
                 _buildRelayView(),
               ],
@@ -257,7 +274,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     final events = _getFilteredEvents();
     
     return Row(
-          children: [
+      children: [
         // 左側項目選擇面板
             Container(
           width: 300,
@@ -277,7 +294,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   children: [
                     Icon(Icons.list, color: Colors.blue),
                     SizedBox(width: 8),
-                    Text(
+                  Text(
                       '選擇項目',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
@@ -309,10 +326,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                       trailing: isSelected ? const Icon(Icons.check, color: Colors.blue) : null,
                     );
                   },
-                ),
+                      ),
+                    ),
+                ],
               ),
-            ],
-          ),
         ),
         
         // 右側成績輸入區域
@@ -345,31 +362,31 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          children: [
           // 表格標題和操作按鈕
-          Container(
+            Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+              decoration: BoxDecoration(
               color: Colors.blue[50],
               borderRadius: BorderRadius.circular(8),
-            ),
+              ),
             child: Row(
                   children: [
                 Expanded(
-                  child: Column(
+              child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    Text(
+                children: [
+                  Text(
                         '${event.code} ${event.name}',
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
-                      Text(
+                    Text(
                         '初賽成績輸入 - 共 ${participants.length} 位參賽者',
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
-                  ],
-                ),
-                ),
+                ],
+              ),
+            ),
                 Row(
                   children: [
                     ElevatedButton.icon(
@@ -396,7 +413,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           // 表格
           Expanded(
             child: Container(
-                      decoration: BoxDecoration(
+        decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey[300]!),
                         borderRadius: BorderRadius.circular(8),
               ),
@@ -432,11 +449,11 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                             DataCell(
                           Container(
                                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                            decoration: BoxDecoration(
+        decoration: BoxDecoration(
                                   color: Colors.blue[100],
                                   borderRadius: BorderRadius.circular(4),
-                            ),
-                              child: Text(
+        ),
+        child: Text(
                                   '$lane',
                                   style: const TextStyle(fontWeight: FontWeight.bold),
                                 ),
@@ -475,7 +492,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                                   }),
                                   const SizedBox(width: 4),
                                   _buildStatusChip('DQ', _dqStatus[resultKey] ?? false, () {
-                                    setState(() {
+          setState(() {
                                       _dqStatus[resultKey] = !(_dqStatus[resultKey] ?? false);
                                       if (_dqStatus[resultKey] == true) {
                                         _dnfStatus[resultKey] = false;
@@ -517,8 +534,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                               ),
                             ),
                         ],
-                      ),
-                    );
+      ),
+    );
   }
 
   /// 決賽成績輸入界面
@@ -572,13 +589,13 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                         '請先在初賽頁面生成決賽名單',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
-                    ],
-                  ),
+          ],
+        ),
                 ),
         ),
       ],
-    );
-  }
+      );
+    }
 
   /// 成績確認界面
   Widget _buildResultsConfirmationView() {
@@ -616,7 +633,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     '項目代碼：${_selectedEvent!.code} | '
                     '類型：${_selectedEvent!.category == EventCategory.track ? '徑賽' : '田賽'} | '
                     '組別：${_selectedEvent!.divisions.map((d) => d.name).join('、')}',
-                    style: TextStyle(
+                      style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
                     ),
@@ -630,14 +647,14 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+                      decoration: BoxDecoration(
               color: Colors.amber[50],
-              borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.amber[200]!),
-            ),
+                        ),
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                        children: [
                 Row(
                   children: [
                     Icon(Icons.info_outline, color: Colors.amber),
@@ -664,20 +681,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           
           const SizedBox(height: 24),
           
-          // 決賽名單和三甲名單並排顯示
-          Expanded(
+          // 只顯示決賽名單，三甲名單移到獨立TAB
+                          Expanded(
             child: _selectedEvent != null 
-                ? Row(
-                    children: [
-                      Expanded(
-                        child: _buildFinalistsList(),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildPodiumList(),
-                      ),
-                    ],
-                  )
+                ? _buildFinalistsList()
                 : const Center(
                     child: Text(
                       '請先選擇一個項目',
@@ -690,12 +697,94 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
+  /// 三甲名單界面 - 獨立TAB
+  Widget _buildPodiumView() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+          // 項目選擇和名稱顯示
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.amber[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber[200]!),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.military_tech, color: Colors.amber, size: 28),
+                    const SizedBox(width: 8),
+                                Text(
+                      _selectedEvent != null 
+                          ? '${_selectedEvent!.name} - 三甲名單'
+                          : '三甲名單',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '生成時間：${DateTime.now().toString().substring(0, 16)}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+                if (_selectedEvent != null) ...[
+                  const SizedBox(height: 8),
+                                Text(
+                    '項目代碼：${_selectedEvent!.code} | '
+                    '類型：${_selectedEvent!.category == EventCategory.track ? '徑賽' : '田賽'} | '
+                    '組別：${_selectedEvent!.divisions.map((d) => d.name).join('、')}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                      color: Colors.grey[600],
+                                  ),
+                                ),
+                ],
+                              ],
+                            ),
+                          ),
+          
+          const SizedBox(height: 16),
+          
+          // 三甲名單內容
+          Expanded(
+            child: _selectedEvent != null 
+                ? _buildPodiumList()
+                : const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.military_tech, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          '請先選擇一個項目',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          '選擇項目後，完成決賽成績輸入即可生成三甲名單',
+                          style: TextStyle(fontSize: 14, color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// 接力賽界面
   Widget _buildRelayView() {
     return Container(
       padding: const EdgeInsets.all(16),
-                            child: Column(
-                              children: [
+        child: Column(
+          children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -717,10 +806,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           Expanded(
             child: _buildRelayEventsList(),
                                   ),
-                              ],
-                            ),
-    );
-  }
+          ],
+        ),
+      );
+    }
 
   /// 接力賽事列表
   Widget _buildRelayEventsList() {
@@ -741,12 +830,12 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         return Card(
           child: InkWell(
             onTap: () => _showRelayDialog(event),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                    Text(
                     '${event.code} ${event.name}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
@@ -754,9 +843,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   Text(
                     event.specialRules ?? '',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                                ),
-                            ],
-                          ),
+                    ),
+                  ],
+                ),
             ),
           ),
         );
@@ -801,18 +890,18 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     }
     
     final podium = _podiumResults[_selectedEvent!.code];
-    
-    return Container(
-      decoration: BoxDecoration(
+                    
+                    return Container(
+                      decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
-        children: [
+                        children: [
           // 標題欄
-          Container(
+                          Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+                            decoration: BoxDecoration(
               color: Colors.green[50],
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
@@ -829,9 +918,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     Text(
                       '${_selectedEvent!.name} - 三甲名單',
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
+                                ),
+                              ],
+                            ),
                 const SizedBox(height: 8),
                 Text(
                   '生成時間：${DateTime.now().toString().substring(0, 16)}',
@@ -847,12 +936,12 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           ),
           
           // 三甲名單內容
-          Expanded(
+                          Expanded(
             child: podium == null || podium.isEmpty
                 ? const Center(
-                    child: Column(
+                            child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                              children: [
                         Icon(Icons.emoji_events_outlined, 
                              color: Colors.grey, size: 48),
                         SizedBox(height: 16),
@@ -919,16 +1008,16 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                                 index < medals.length 
                                     ? '${medals[index]} ${index + 1}'
                                     : '${index + 1}',
-                                style: const TextStyle(
+                                  style: const TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
                             ),
                           ),
                           // 參賽編號
                           DataCell(
-                            Text(
+                                Text(
                               student.studentCode,
                               style: const TextStyle(fontWeight: FontWeight.w500),
                             ),
@@ -941,7 +1030,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                           DataCell(Text(student.studentNumber)),
                           // 成績
                           DataCell(
-                            Text(
+                                  Text(
                               winner.finalResult.toString(),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -1013,9 +1102,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                               tooltip: winner.archived 
                                   ? '已存檔' 
                                   : '存檔',
-                            ),
-                          ),
-                        ],
+                                    ),
+                                  ),
+                              ],
                       );
                     }).toList(),
                   ),
@@ -1033,7 +1122,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+                            children: [
             const Icon(Icons.info_outline, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             const Text(
@@ -1054,9 +1143,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     return Column(
       children: [
         // 頂部操作欄
-        Container(
+                                Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
+                                  decoration: BoxDecoration(
             color: Colors.blue[50],
             border: Border.all(color: Colors.blue[200]!),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
@@ -1067,10 +1156,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
               const SizedBox(width: 8),
               Text(
                 '${event.name} - 決賽成績輸入',
-                style: TextStyle(
+                                    style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
+                                      color: Colors.blue[700],
                 ),
               ),
               const Spacer(),
@@ -1092,9 +1181,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   backgroundColor: Colors.purple,
                   foregroundColor: Colors.white,
                 ),
-              ),
-            ],
-          ),
+                          ),
+                        ],
+                      ),
         ),
         
         // 決賽成績表格
@@ -1330,7 +1419,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Row(
-          children: [
+        children: [
             const Icon(Icons.groups, color: Colors.purple),
             const SizedBox(width: 8),
             Expanded(child: Text('${event.name} 成績輸入')),
@@ -1347,12 +1436,12 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             child: const Text('取消'),
           ),
           ElevatedButton(
-            onPressed: () {
+              onPressed: () {
               _saveRelayResults(event);
-              Navigator.pop(context);
-            },
+                Navigator.pop(context);
+              },
             child: const Text('保存成績'),
-          ),
+            ),
         ],
       ),
     );
@@ -1365,7 +1454,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     final classes = ['A', 'B', 'C', 'D']; // 每年級的班別
     
     return Column(
-      children: [
+        children: [
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -1388,9 +1477,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
               const Text(
                 '說明：接力賽直接進行決賽，無需初賽。請按年級和班別填入最終成績。',
                 style: TextStyle(fontSize: 12, color: Colors.blue),
-              ),
-            ],
-          ),
+            ),
+        ],
+      ),
         ),
         
         const SizedBox(height: 16),
@@ -1485,7 +1574,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   DataCell(
                     rank > 0 
                         ? Row(
-                            children: [
+        children: [
                               Text(
                                 rank.toString(),
                                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -1524,7 +1613,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   ),
                   DataCell(
                     ElevatedButton(
-                      onPressed: () {
+              onPressed: () {
                         setState(() {
                           _finalsResults.remove(teamKey);
                           _dnfStatus.remove(teamKey);
@@ -2061,7 +2150,36 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
-  /// 構建成績輸入框
+    /// 獲取或創建成績輸入控制器
+  TextEditingController _getOrCreateController(String resultKey, bool isInitial) {
+    final controllers = isInitial ? _preliminaryControllers : _finalsControllers;
+    final results = isInitial ? _preliminaryResults : _finalsResults;
+    
+    if (!controllers.containsKey(resultKey)) {
+      final controller = TextEditingController();
+      
+      // 設置初始值
+      final currentValue = results[resultKey] ?? '';
+      controller.text = currentValue;
+      
+      // 監聽變化並同步到數據
+      controller.addListener(() {
+        final newValue = controller.text;
+        if (results[resultKey] != newValue) {
+          setState(() {
+            results[resultKey] = newValue;
+            _saveResultsData();
+          });
+        }
+      });
+      
+      controllers[resultKey] = controller;
+    }
+    
+    return controllers[resultKey]!;
+  }
+
+  /// 構建成績輸入框 - 使用TextEditingController確保數據持久化
   Widget _buildResultTextField({
     required String resultKey,
     required bool isInitial,
@@ -2072,40 +2190,41 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     final isABS = _absStatus[resultKey] ?? false;
     
     final hasSpecialStatus = isDNF || isDQ || isABS;
-    final statusText = isDNF ? 'DNF' : (isDQ ? 'DQ' : (isABS ? 'ABS' : ''));
     
-    final resultValue = isInitial 
-        ? (_preliminaryResults[resultKey] ?? '')
-        : (_finalsResults[resultKey] ?? '');
+    if (hasSpecialStatus) {
+      // 特殊狀態顯示
+      final statusText = isDNF ? 'DNF' : (isDQ ? 'DQ' : 'ABS');
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(4),
+          color: Colors.grey[200],
+        ),
+        child: Text(
+          statusText,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
     
-    return TextFormField(
-      initialValue: hasSpecialStatus ? statusText : resultValue,
-      enabled: !hasSpecialStatus,
+    // 正常成績輸入
+    final controller = _getOrCreateController(resultKey, isInitial);
+    
+    return TextField(
+      controller: controller,
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
-        hintText: hasSpecialStatus ? '' : _getHintForEvent(event),
+        hintText: _getHintForEvent(event),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        filled: hasSpecialStatus,
-        fillColor: hasSpecialStatus ? Colors.grey[200] : null,
       ),
-      style: TextStyle(
-        color: hasSpecialStatus ? Colors.grey[600] : Colors.black,
-        fontWeight: hasSpecialStatus ? FontWeight.bold : FontWeight.normal,
-      ),
-      keyboardType: hasSpecialStatus ? null : TextInputType.number,
-      onChanged: hasSpecialStatus ? null : (value) {
-        setState(() {
-          if (isInitial) {
-            _preliminaryResults[resultKey] = value;
-          } else {
-            _finalsResults[resultKey] = value;
-          }
-          // 自動儲存數據
-          _saveResultsData();
-        });
-      },
-      inputFormatters: hasSpecialStatus ? null : [
+      keyboardType: TextInputType.number,
+      inputFormatters: [
         if (event.category == EventCategory.track)
           FilteringTextInputFormatter.allow(RegExp(r'[\d\.:]+'))
         else
@@ -2123,9 +2242,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           if (_dnfStatus[resultKey] == true) {
             _dqStatus[resultKey] = false;
             _absStatus[resultKey] = false;
-            // 清除原有成績
-            _preliminaryResults[resultKey] = '';
-            _finalsResults[resultKey] = '';
+            _clearResultControllers(resultKey);
           }
           break;
         case 'DQ':
@@ -2133,9 +2250,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           if (_dqStatus[resultKey] == true) {
             _dnfStatus[resultKey] = false;
             _absStatus[resultKey] = false;
-            // 清除原有成績
-            _preliminaryResults[resultKey] = '';
-            _finalsResults[resultKey] = '';
+            _clearResultControllers(resultKey);
           }
           break;
         case 'ABS':
@@ -2143,13 +2258,27 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           if (_absStatus[resultKey] == true) {
             _dnfStatus[resultKey] = false;
             _dqStatus[resultKey] = false;
-            // 清除原有成績
-            _preliminaryResults[resultKey] = '';
-            _finalsResults[resultKey] = '';
+            _clearResultControllers(resultKey);
           }
           break;
       }
+      _saveResultsData();
     });
+  }
+
+  /// 清除成績控制器和數據
+  void _clearResultControllers(String resultKey) {
+    // 清除數據
+    _preliminaryResults[resultKey] = '';
+    _finalsResults[resultKey] = '';
+    
+    // 清除控制器內容
+    if (_preliminaryControllers.containsKey(resultKey)) {
+      _preliminaryControllers[resultKey]!.clear();
+    }
+    if (_finalsControllers.containsKey(resultKey)) {
+      _finalsControllers[resultKey]!.clear();
+    }
   }
 
   /// 自動儲存成績數據
@@ -2177,7 +2306,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     }
   }
 
-  /// 載入已儲存的成績數據
+    /// 載入已儲存的成績數據
   void _loadResultsData() {
     try {
       final savedData = html.window.localStorage['referee_results'];
@@ -2222,11 +2351,29 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           }
         });
         
-        print('✅ 成績數據已載入');
+        // 重要：數據載入後，清除所有控制器，讓它們重新創建
+        _clearAllControllers();
+        
+        print('✅ 成績數據已載入，控制器已重置');
       }
     } catch (e) {
       print('❌ 載入成績數據失敗: $e');
     }
+  }
+
+  /// 清除所有控制器，強制重新創建
+  void _clearAllControllers() {
+    // 釋放現有控制器
+    for (final controller in _preliminaryControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _finalsControllers.values) {
+      controller.dispose();
+    }
+    
+    // 清空控制器Map
+    _preliminaryControllers.clear();
+    _finalsControllers.clear();
   }
 
   /// 清除篩選
