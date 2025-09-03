@@ -98,10 +98,26 @@ class UserService {
   static bool hasPermission(String action) {
     if (_currentUser == null) return false;
     
-    // 所有登入用戶都有基本權限
-    // 可以根據需要擴展角色權限系統
-    return true;
+    final role = _currentUser!.role;
+    
+    // 系統管理員擁有所有權限
+    if (role == UserRole.admin) {
+      return true;
+    }
+    
+    // 觀看者權限控制
+    if (role == UserRole.viewer) {
+      return UserPermissions.viewerPermissions.contains(action);
+    }
+    
+    return false;
   }
+  
+  /// 檢查是否為系統管理員
+  static bool get isAdmin => _currentUser?.role == UserRole.admin;
+  
+  /// 檢查是否為觀看者
+  static bool get isViewer => _currentUser?.role == UserRole.viewer;
 }
 
 /// 用戶模型
@@ -146,9 +162,65 @@ class User {
 /// 用戶角色定義
 class UserRole {
   static const String admin = '系統管理員';
-  static const String referee = '裁判員';
-  static const String scorer = '計分員';
   static const String viewer = '觀看者';
   
-  static List<String> get allRoles => [admin, referee, scorer, viewer];
+  static List<String> get allRoles => [admin, viewer];
+}
+
+/// 用戶權限定義
+class UserPermissions {
+  // 基本權限動作
+  static const String viewDashboard = 'view_dashboard';
+  static const String viewStudents = 'view_students';
+  static const String viewEvents = 'view_events';
+  static const String viewRankings = 'view_rankings';
+  static const String viewRefereeSystem = 'view_referee_system';
+  
+  // 數據操作權限
+  static const String editStudents = 'edit_students';
+  static const String editEvents = 'edit_events';
+  static const String importData = 'import_data';
+  static const String exportData = 'export_data';
+  static const String clearData = 'clear_data';
+  
+  // 成績相關權限
+  static const String inputScores = 'input_scores';
+  static const String confirmScores = 'confirm_scores';
+  static const String generateFinalists = 'generate_finalists';
+  static const String printResults = 'print_results';
+  
+  // 系統管理權限
+  static const String manageUsers = 'manage_users';
+  static const String viewLogs = 'view_logs';
+  static const String systemSettings = 'system_settings';
+  
+  /// 觀看者可用權限（只能查看，不能修改）
+  static const Set<String> viewerPermissions = {
+    viewDashboard,
+    viewStudents,
+    viewEvents,
+    viewRankings,
+    viewRefereeSystem,
+    exportData,  // 允許匯出數據
+    printResults, // 允許列印結果
+  };
+  
+  /// 系統管理員權限（包含所有權限）
+  static const Set<String> adminPermissions = {
+    // 觀看權限
+    ...viewerPermissions,
+    // 編輯權限
+    editStudents,
+    editEvents,
+    importData,
+    clearData,
+    // 成績權限
+    inputScores,
+    confirmScores,
+    generateFinalists,
+    // 系統權限
+    manageUsers,
+    viewLogs,
+    systemSettings,
+  };
 }

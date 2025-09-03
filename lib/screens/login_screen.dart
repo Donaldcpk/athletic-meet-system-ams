@@ -14,7 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
-  String _selectedRole = UserRole.scorer;
+  String _selectedRole = UserRole.admin;
   bool _isLoading = false;
 
   @override
@@ -257,10 +257,6 @@ class _LoginScreenState extends State<LoginScreen> {
     switch (role) {
       case UserRole.admin:
         return Icon(Icons.admin_panel_settings, color: Colors.red[600]);
-      case UserRole.referee:
-        return Icon(Icons.sports_kabaddi, color: Colors.orange[600]);
-      case UserRole.scorer:
-        return Icon(Icons.calculate, color: Colors.blue[600]);
       case UserRole.viewer:
         return Icon(Icons.visibility, color: Colors.green[600]);
       default:

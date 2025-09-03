@@ -12,6 +12,7 @@ import 'screens/login_screen.dart';
 import 'utils/app_state.dart';
 import 'services/user_service.dart';
 import 'services/operation_log_service.dart';
+import 'services/scoring_service.dart';
 
 void main() {
   runApp(const AthleticMeetSystemApp());
@@ -93,6 +94,13 @@ class _AppInitializerState extends State<AppInitializer> {
       
       // 載入操作日誌
       OperationLogService.loadFromLocal();
+      
+      setState(() {
+        _initializationStatus = '正在載入積分數據...';
+      });
+      
+      // 載入積分數據
+      await ScoringService.loadScores();
 
       setState(() {
         _initializationStatus = '初始化完成';

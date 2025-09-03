@@ -7,6 +7,7 @@ import '../utils/app_state.dart';
 import '../constants/app_constants.dart';
 import '../constants/event_constants.dart';
 import '../widgets/common_app_bar.dart';
+import '../services/scoring_service.dart';
 
 /// 成績排名頁面
 class RankingsScreen extends StatefulWidget {
@@ -57,18 +58,18 @@ class _RankingsScreenState extends State<RankingsScreen>
               title: '成績排名',
               showBackButton: true,
               backRoute: '/dashboard',
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.file_download),
-                  onPressed: _exportRankings,
-                  tooltip: '匯出排名',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: _refreshData,
-                  tooltip: '重新計算',
-                ),
-              ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.file_download),
+            onPressed: _exportRankings,
+            tooltip: '匯出排名',
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshData,
+            tooltip: '重新計算',
+          ),
+        ],
             ),
             Container(
               color: Theme.of(context).primaryColor,
@@ -119,11 +120,11 @@ class _RankingsScreenState extends State<RankingsScreen>
       child: Column(
         children: [
           Row(
-            children: [
-              Expanded(
+        children: [
+          Expanded(
                 flex: 3,
-                child: TextField(
-                  controller: _searchController,
+            child: TextField(
+              controller: _searchController,
                   decoration: InputDecoration(
                     hintText: '搜尋參賽編號、姓名、班級...',
                     prefixIcon: const Icon(Icons.search),
@@ -138,9 +139,9 @@ class _RankingsScreenState extends State<RankingsScreen>
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: _sortBy,
-                  decoration: const InputDecoration(
+              decoration: const InputDecoration(
                     labelText: '排序依據',
-                    border: OutlineInputBorder(),
+                border: OutlineInputBorder(),
                   ),
                   items: const [
                     DropdownMenuItem(value: 'rank', child: Text('排名')),
@@ -166,31 +167,31 @@ class _RankingsScreenState extends State<RankingsScreen>
           const SizedBox(width: 12),
           Row(
             children: [
-              Expanded(
-                child: DropdownButtonFormField<Division>(
-                  value: _selectedDivision,
-                  decoration: const InputDecoration(
+          Expanded(
+            child: DropdownButtonFormField<Division>(
+              value: _selectedDivision,
+              decoration: const InputDecoration(
                     labelText: '組別篩選',
-                    border: OutlineInputBorder(),
+                border: OutlineInputBorder(),
                   ),
                   items: Division.values.map((division) {
                     return DropdownMenuItem(
-                      value: division,
-                      child: Text(division.displayName),
+                  value: division,
+                  child: Text(division.displayName),
                     );
                   }).toList(),
-                  onChanged: (value) {
+              onChanged: (value) {
                     setState(() => _selectedDivision = value);
-                  },
-                ),
-              ),
+              },
+            ),
+          ),
               const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonFormField<Gender>(
-                  value: _selectedGender,
-                  decoration: const InputDecoration(
+          Expanded(
+            child: DropdownButtonFormField<Gender>(
+              value: _selectedGender,
+              decoration: const InputDecoration(
                     labelText: '性別篩選',
-                    border: OutlineInputBorder(),
+                border: OutlineInputBorder(),
                   ),
                   items: [Gender.male, Gender.female].map((gender) {
                     return DropdownMenuItem(
@@ -198,14 +199,14 @@ class _RankingsScreenState extends State<RankingsScreen>
                       child: Text(gender.displayName),
                     );
                   }).toList(),
-                  onChanged: (value) {
+              onChanged: (value) {
                     setState(() => _selectedGender = value);
-                  },
-                ),
-              ),
+              },
+            ),
+          ),
               const SizedBox(width: 12),
               ElevatedButton(
-                onPressed: _clearFilters,
+            onPressed: _clearFilters,
                 child: const Text('清除篩選'),
               ),
             ],
@@ -220,11 +221,11 @@ class _RankingsScreenState extends State<RankingsScreen>
   /// 個人排名界面
   Widget _buildIndividualRankingView() {
     final rankings = _calculateIndividualRankings(_getFilteredStudents());
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
-        children: [
+      children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -243,15 +244,15 @@ class _RankingsScreenState extends State<RankingsScreen>
             ),
           ),
           const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
+        Expanded(
+          child: ListView.builder(
               itemCount: rankings.length,
-              itemBuilder: (context, index) {
+            itemBuilder: (context, index) {
                 return _buildStudentRankingCard(rankings[index], index + 1);
-              },
-            ),
+            },
           ),
-        ],
+        ),
+      ],
       ),
     );
   }
@@ -295,9 +296,9 @@ class _RankingsScreenState extends State<RankingsScreen>
   /// 完整的頒獎名單界面
   Widget _buildAwardListView() {
     return Container(
-      padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
       child: Column(
-        children: [
+            children: [
           // 標題和統計概覽
           Container(
             padding: const EdgeInsets.all(16),
@@ -325,8 +326,8 @@ class _RankingsScreenState extends State<RankingsScreen>
                 ),
                 const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
                     _buildAwardStat('個人項目', '${_getIndividualEventCount()}', Colors.blue),
                     _buildAwardStat('接力項目', '${_getRelayEventCount()}', Colors.green),
                     _buildAwardStat('總獎項', '${_getTotalAwardsCount()}', Colors.orange),
@@ -356,7 +357,7 @@ class _RankingsScreenState extends State<RankingsScreen>
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: color,
-          ),
+        ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -425,7 +426,7 @@ class _RankingsScreenState extends State<RankingsScreen>
               DataCell(
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
+          decoration: BoxDecoration(
                     color: _getRankColor(award['rank']),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -434,15 +435,15 @@ class _RankingsScreenState extends State<RankingsScreen>
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                    ),
                   ),
-                ),
-              ),
+          ),
+        ),
+            ),
               DataCell(Text(award['studentCode'] ?? '')),
               DataCell(Text(award['studentName'] ?? '')),
               DataCell(Text(award['classId'] ?? '')),
               DataCell(
-                Text(
+            Text(
                   award['result'] ?? '--',
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
@@ -599,16 +600,16 @@ class _RankingsScreenState extends State<RankingsScreen>
                 fontSize: rankIcon.isNotEmpty ? 24 : 16,
                 fontWeight: FontWeight.bold,
                 color: rankColor,
-              ),
-            ),
+                  ),
           ),
+        ),
         ),
         title: Row(
           children: [
             Text(
               student.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -703,20 +704,20 @@ class _RankingsScreenState extends State<RankingsScreen>
                 topRight: Radius.circular(8),
               ),
             ),
-            child: Row(
-              children: [
+      child: Row(
+        children: [
                 Icon(Icons.table_chart, color: themeColor),
-                const SizedBox(width: 8),
+          const SizedBox(width: 8),
                 Text(
                   title,
-                  style: TextStyle(
+              style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.bold,
                     color: themeColor,
-                  ),
-                ),
-              ],
             ),
+          ),
+        ],
+      ),
           ),
           
           // 表格內容
@@ -751,36 +752,36 @@ class _RankingsScreenState extends State<RankingsScreen>
                     ...classes.map((className) {
                       final points = eventData[className] ?? 0;
                       return DataCell(
-                        Container(
+          Container(
                           padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
+            decoration: BoxDecoration(
                             color: points > 0 ? themeColor.withOpacity(0.1) : null,
                             borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
+            ),
+            child: Text(
                             points.toString(),
-                            style: TextStyle(
+              style: TextStyle(
                               fontWeight: points > 0 ? FontWeight.bold : FontWeight.normal,
                               color: points > 0 ? themeColor : Colors.black,
                             ),
-                          ),
-                        ),
-                      );
+        ),
+      ),
+    );
                     }),
                     DataCell(
                       Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
+      decoration: BoxDecoration(
                           color: themeColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           total.toString(),
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.bold,
                             color: themeColor,
                           ),
-                        ),
+              ),
                       ),
                     ),
                   ],
@@ -818,8 +819,8 @@ class _RankingsScreenState extends State<RankingsScreen>
               DataCell(Text(award['division']!)),
               DataCell(Text(award['event']!)),
               DataCell(
-                Row(
-                  children: [
+            Row(
+              children: [
                     Text(award['rank']!),
                     const SizedBox(width: 4),
                     Text(award['medal']!),
@@ -840,9 +841,9 @@ class _RankingsScreenState extends State<RankingsScreen>
                 Icon(
                   award['printed'] == 'true' ? Icons.check_circle : Icons.radio_button_unchecked,
                   color: award['printed'] == 'true' ? Colors.green : Colors.grey,
-                ),
               ),
-            ],
+            ),
+          ],
           );
         }).toList(),
       ),
@@ -875,26 +876,26 @@ class _RankingsScreenState extends State<RankingsScreen>
     return Card(
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+        children: [
             Icon(icon, size: 48, color: color),
             const SizedBox(height: 12),
-            Text(
-              value,
+          Text(
+            value,
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: color,
-              ),
+          ),
             ),
             const SizedBox(height: 8),
-            Text(
-              title,
+          Text(
+            title,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -911,7 +912,7 @@ class _RankingsScreenState extends State<RankingsScreen>
   Widget _buildScoreBreakdown(StudentRanking ranking) {
     return Wrap(
       spacing: 8,
-      children: [
+          children: [
         _buildScoreChip('參與分', ranking.participationPoints, Colors.blue),
         _buildScoreChip('名次分', ranking.awardPoints, Colors.green),
         if (ranking.student.isStaff)
@@ -925,12 +926,12 @@ class _RankingsScreenState extends State<RankingsScreen>
   Widget _buildScoreChip(String label, int points, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
+                decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
-      child: Text(
+                  child: Text(
         '$label +$points',
         style: TextStyle(
           fontSize: 12,
@@ -944,11 +945,22 @@ class _RankingsScreenState extends State<RankingsScreen>
   /// 計算個人排名
   List<StudentRanking> _calculateIndividualRankings(List<Student> students) {
     final rankings = students.map((student) {
-      // 只計算確實已確認的分數，名次分需要裁判系統確認後才計算
-      final participationPoints = student.registeredEvents.length; // 參與分
-      final awardPoints = 0; // 名次分需要裁判確認成績後才計算，暫時為0
-      final recordBonus = 0; // 破紀錄獎勵分需要裁判確認，暫時為0
-      final staffBonus = student.isStaff ? AppConstants.staffBonus : 0; // 工作人員獎勵分
+      // 🔥 使用ScoringService的真實積分數據
+      final studentScores = ScoringService.getStudentAllScores(student.id);
+      
+      // 計算各類積分
+      int participationPoints = 0;
+      int awardPoints = 0;
+      int recordBonus = 0;
+      
+      for (final score in studentScores) {
+        participationPoints += score.participationPoints;
+        awardPoints += score.awardPoints;
+        recordBonus += score.recordBonus;
+      }
+      
+      // 工作人員獎勵分
+      final staffBonus = student.isStaff ? AppConstants.staffBonus : 0;
       
       return StudentRanking(
         student: student,
@@ -1003,17 +1015,24 @@ class _RankingsScreenState extends State<RankingsScreen>
       }
     }
     
-    // 計算參與分
+    // 🔥 使用ScoringService的真實積分數據
     for (final student in _appState.students) {
-      for (final eventCode in student.registeredEvents) {
+      final studentScores = ScoringService.getStudentAllScores(student.id);
+      
+      for (final score in studentScores) {
+        final eventCode = score.eventCode;
+        
         if (participationPoints.containsKey(eventCode)) {
+          // 累加參與分
           participationPoints[eventCode]![student.classId] = 
-              (participationPoints[eventCode]![student.classId] ?? 0) + 1;
+              (participationPoints[eventCode]![student.classId] ?? 0) + score.participationPoints;
+          
+          // 累加名次分
+          awardPoints[eventCode]![student.classId] = 
+              (awardPoints[eventCode]![student.classId] ?? 0) + score.awardPoints + score.recordBonus;
         }
       }
     }
-    
-    // TODO: 計算決賽分（需要從裁判系統獲取實際成績）
     
     // 計算總分
     for (final event in events) {
@@ -1151,4 +1170,4 @@ class StudentRanking {
     required this.recordBonus,
     required this.totalPoints,
   });
-}
+} 
