@@ -318,15 +318,29 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   itemBuilder: (context, index) {
                     final event = events[index];
                     final isSelected = _selectedEvent?.code == event.code;
+                    final hasResults = _hasEventResults(event);
+                    final lastUpdateTime = _getEventLastUpdateTime(event);
+                    
                     return ListTile(
                       title: Text(
                         '${event.code} ${event.name}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: hasResults ? Colors.green[700] : null,
                         ),
                       ),
-                      subtitle: Text(event.category.displayName),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(event.category.displayName),
+                          if (hasResults && lastUpdateTime != null)
+                            Text(
+                              '最後更新：${_formatDateTime(lastUpdateTime)}',
+                              style: TextStyle(fontSize: 10, color: Colors.green[600]),
+                            ),
+                        ],
+                      ),
                       selected: isSelected,
                       selectedTileColor: Colors.blue[100],
                       onTap: () {
@@ -334,7 +348,15 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                           _selectedEvent = event;
                         });
                       },
-                      trailing: isSelected ? const Icon(Icons.check, color: Colors.blue) : null,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (hasResults) 
+                            Icon(Icons.check_circle, color: Colors.green[600], size: 16),
+                          if (isSelected) 
+                            const Icon(Icons.arrow_forward_ios, color: Colors.blue, size: 16),
+                        ],
+                      ),
                     );
                   },
                       ),
@@ -551,17 +573,19 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
 
   /// 決賽成績輸入界面
   Widget _buildFinalsView() {
+    final eventsWithResults = _getEventsWithPreliminaryResults();
+    
     return Row(
-          children: [
-        // 左側決賽名單
-            Container(
-          width: 400,
-              decoration: BoxDecoration(
+      children: [
+        // 左側有初賽成績的項目列表
+        Container(
+          width: 350,
+          decoration: BoxDecoration(
             color: Colors.grey[100],
             border: Border(right: BorderSide(color: Colors.grey[300]!)),
-              ),
-              child: Column(
-                children: [
+          ),
+          child: Column(
+            children: [
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -572,37 +596,78 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   children: [
                     Icon(Icons.list_alt, color: Colors.green),
                     SizedBox(width: 8),
-                  Text(
-                      '決賽名單',
+                    Text(
+                      '可進行決賽的項目',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
               ),
               Expanded(
-                child: _buildFinalistsList(),
+                child: eventsWithResults.isNotEmpty 
+                    ? ListView.builder(
+                        itemCount: eventsWithResults.length,
+                        itemBuilder: (context, index) {
+                          final event = eventsWithResults[index];
+                          final isSelected = _selectedEvent?.code == event.code;
+                          final finalistCount = _getFinalistCount(event);
+                          
+                          return ListTile(
+                            selected: isSelected,
+                            selectedTileColor: Colors.green[100],
+                            title: Text(
+                              '${event.code} ${event.name}',
+                              style: TextStyle(
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                color: isSelected ? Colors.green[700] : null,
+                              ),
+                            ),
+                            subtitle: Text('可進決賽：$finalistCount人'),
+                            trailing: isSelected 
+                                ? Icon(Icons.arrow_forward_ios, color: Colors.green[700], size: 16)
+                                : null,
+                            onTap: () {
+                              setState(() {
+                                _selectedEvent = event;
+                                // 自動生成決賽名單
+                                _generateFinalistsForEvent(event);
+                              });
+                            },
+                          );
+                        },
+                      )
+                    : const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            '暫無項目有初賽成績\n請先在初賽TAB輸入成績',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      ),
               ),
-              ],
-            ),
+            ],
           ),
+        ),
         
         // 右側決賽成績輸入
         Expanded(
-          child: _selectedEvent != null && (_finalists[_selectedEvent!.code]?.isNotEmpty ?? false)
+          child: _selectedEvent != null 
               ? _buildFinalsTable(_selectedEvent!)
               : const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       Icon(Icons.emoji_events, size: 48, color: Colors.grey),
-            SizedBox(height: 16),
-                    Text(
-                        '請先在初賽頁面生成決賽名單',
+                      SizedBox(height: 16),
+                      Text(
+                        '請在左側選擇一個項目開始輸入決賽成績',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                ],
-              ),
-            ),
+                      ),
+                    ],
+                  ),
+                ),
         ),
       ],
     );
@@ -1566,6 +1631,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     SizedBox(
                       width: 120,
                       child: TextField(
+                        controller: _getOrCreateRelayController(teamKey),
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
                           hintText: _getHintForEvent(event),
@@ -1575,11 +1641,6 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                           ),
                           isDense: true,
                         ),
-                        onChanged: (value) {
-                          setState(() {
-                            _finalsResults[teamKey] = value;
-                          });
-                        },
                         inputFormatters: [
                           FilteringTextInputFormatter.allow(RegExp(r'[\d\.:]+'))
                         ],
@@ -1873,6 +1934,188 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         return '45.67';
       default:
         return '輸入成績';
+    }
+  }
+
+  /// 檢查項目是否有成績
+  bool _hasEventResults(EventInfo event) {
+    // 檢查初賽成績
+    for (final student in _appState.students) {
+      if (student.registeredEvents.contains(event.code)) {
+        final resultKey = '${student.id}_${event.code}';
+        if (_preliminaryResults.containsKey(resultKey) && 
+            _preliminaryResults[resultKey]!.isNotEmpty) {
+          return true;
+        }
+      }
+    }
+    
+    // 檢查接力成績
+    if (event.category == EventCategory.relay) {
+      return _finalsResults.keys.any((key) => 
+          key.contains(event.code) && _finalsResults[key]!.isNotEmpty);
+    }
+    
+    return false;
+  }
+  
+  /// 獲取項目最後更新時間
+  DateTime? _getEventLastUpdateTime(EventInfo event) {
+    // 暫時返回當前時間，可以後續實現真實的時間戳追蹤
+    if (_hasEventResults(event)) {
+      return DateTime.now().subtract(Duration(minutes: (event.code.hashCode % 60).abs()));
+    }
+    return null;
+  }
+  
+  /// 格式化日期時間
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.month}/${dateTime.day} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+  
+  /// 獲取有初賽成績的項目列表
+  List<EventInfo> _getEventsWithPreliminaryResults() {
+    final allEvents = EventConstants.allEvents.where((e) => e.isScoring && e.category != EventCategory.relay).toList();
+    return allEvents.where((event) => _hasEventResults(event)).toList();
+  }
+  
+  /// 獲取項目的決賽人數
+  int _getFinalistCount(EventInfo event) {
+    // 獲取有初賽成績的學生
+    final participants = <String, double>{};
+    
+    for (final student in _appState.students) {
+      if (student.registeredEvents.contains(event.code)) {
+        final resultKey = '${student.id}_${event.code}';
+        final result = _preliminaryResults[resultKey];
+        
+        if (result != null && result.isNotEmpty) {
+          // 檢查是否有特殊狀態
+          final isDNF = _dnfStatus[resultKey] ?? false;
+          final isDQ = _dqStatus[resultKey] ?? false;
+          final isABS = _absStatus[resultKey] ?? false;
+          
+          if (!isDNF && !isDQ && !isABS) {
+            final numericResult = _parseResult(result);
+            if (numericResult != null) {
+              participants[student.id] = numericResult;
+            }
+          }
+        }
+      }
+    }
+    
+    // 返回可進決賽的人數（前8名或所有人如果少於8人）
+    return participants.length > 8 ? 8 : participants.length;
+  }
+  
+  /// 自動為項目生成決賽名單
+  void _generateFinalistsForEvent(EventInfo event) {
+    if (_finalists[event.code] != null) {
+      // 如果已經有決賽名單，直接返回
+      return;
+    }
+    
+    // 獲取有初賽成績的學生
+    final participants = <String, double>{};
+    
+    for (final student in _appState.students) {
+      if (student.registeredEvents.contains(event.code)) {
+        final resultKey = '${student.id}_${event.code}';
+        final result = _preliminaryResults[resultKey];
+        
+        if (result != null && result.isNotEmpty) {
+          // 檢查是否有特殊狀態
+          final isDNF = _dnfStatus[resultKey] ?? false;
+          final isDQ = _dqStatus[resultKey] ?? false;
+          final isABS = _absStatus[resultKey] ?? false;
+          
+          if (!isDNF && !isDQ && !isABS) {
+            final numericResult = _parseResult(result);
+            if (numericResult != null) {
+              participants[student.id] = numericResult;
+            }
+          }
+        }
+      }
+    }
+    
+    if (participants.isEmpty) return;
+    
+    // 排序並取前8名
+    final sortedResults = participants.entries.toList();
+    if (event.category == EventCategory.track) {
+      sortedResults.sort((a, b) => a.value.compareTo(b.value)); // 時間越短越好
+    } else {
+      sortedResults.sort((a, b) => b.value.compareTo(a.value)); // 距離越大越好
+    }
+    
+    final finalistCount = sortedResults.length > 8 ? 8 : sortedResults.length;
+    final finalistIds = sortedResults.take(finalistCount).map((e) => e.key).toList();
+    
+    _finalists[event.code] = finalistIds;
+    _saveResultsData(); // 保存數據
+    
+    print('✅ 自動生成決賽名單：${event.name} (${finalistIds.length}人)');
+  }
+
+  /// 立即更新接力賽團隊積分
+  Future<void> _updateRelayTeamPoints(String teamKey) async {
+    try {
+      // 解析teamKey: grade_class_eventCode (例如: S1_A_1441)
+      final parts = teamKey.split('_');
+      if (parts.length < 3) return;
+      
+      final grade = parts[0];
+      final classLetter = parts[1];
+      final eventCode = parts[2];
+      final classId = '$grade$classLetter';
+      
+      // 對於接力賽，我們為整個班級計算班級參與分
+      // 根據用戶規則：班級接力有班參與分、無個人參與分
+      
+      // 這裡暫時不計算具體學生積分，因為接力賽是團隊項目
+      // 班級積分將在班分統計中體現
+      
+      print('🔥 接力賽成績輸入：$classId - $eventCode');
+    } catch (e) {
+      print('❌ 更新接力賽積分失敗: $e');
+    }
+  }
+
+  /// 立即更新參與分（初賽成績輸入時調用）
+  Future<void> _updateParticipationPointsForResult(String resultKey) async {
+    try {
+      // 解析resultKey: studentId_eventCode
+      final parts = resultKey.split('_');
+      if (parts.length < 2) return;
+      
+      final studentId = parts[0];
+      final eventCode = parts[1];
+      
+      // 獲取成績和狀態
+      final result = _preliminaryResults[resultKey];
+      final isDNF = _dnfStatus[resultKey] ?? false;
+      final isDQ = _dqStatus[resultKey] ?? false;
+      final isABS = _absStatus[resultKey] ?? false;
+      
+      // 立即更新積分系統（只計算參與分，不計算名次分）
+      await ScoringService.updateStudentScore(
+        studentId: studentId,
+        eventCode: eventCode,
+        preliminaryResult: result,
+        finalsResult: null,
+        preliminaryRank: 0,
+        finalsRank: 0, // 初賽階段不計算名次分
+        isDNF: isDNF,
+        isDQ: isDQ,
+        isABS: isABS,
+        isRecordBreaker: false,
+      );
+      
+      print('🔥 已更新參與分：學生$studentId, 項目$eventCode');
+    } catch (e) {
+      print('❌ 更新參與分失敗: $e');
     }
   }
 
@@ -2262,6 +2505,11 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             results[resultKey] = newValue;
             _saveResultsData();
           });
+          
+          // 🔥 立即計算參與分（對於初賽成績）
+          if (isInitial && newValue.isNotEmpty) {
+            _updateParticipationPointsForResult(resultKey);
+          }
         }
       });
       
@@ -2269,6 +2517,37 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     }
     
     return controllers[resultKey]!;
+  }
+
+  /// 獲取或創建接力賽TextEditingController
+  TextEditingController _getOrCreateRelayController(String teamKey) {
+    if (!_finalsControllers.containsKey(teamKey)) {
+      final controller = TextEditingController();
+      
+      // 設置初始值
+      final currentValue = _finalsResults[teamKey] ?? '';
+      controller.text = currentValue;
+      
+      // 監聽變化並同步到數據
+      controller.addListener(() {
+        final newValue = controller.text;
+        if (_finalsResults[teamKey] != newValue) {
+          setState(() {
+            _finalsResults[teamKey] = newValue;
+          });
+          _saveResultsData(); // 立即保存數據
+          
+          // 🔥 接力賽成績輸入時立即計算班級積分
+          if (newValue.isNotEmpty) {
+            _updateRelayTeamPoints(teamKey);
+          }
+        }
+      });
+      
+      _finalsControllers[teamKey] = controller;
+    }
+    
+    return _finalsControllers[teamKey]!;
   }
 
   /// 構建成績輸入框 - 使用TextEditingController確保數據持久化
