@@ -526,6 +526,7 @@ class PodiumWinner {
   final double result;
   final String finalResult;
   final int points;
+  final int rank;               // 排名（支持並列）
   final bool submittedToAwards; // 是否已提交頒獎組
   final bool archived;          // 是否已存檔
 
@@ -537,6 +538,7 @@ class PodiumWinner {
     required this.result,
     required this.finalResult,
     required this.points,
+    this.rank = 1,
     this.submittedToAwards = false,
     this.archived = false,
   });
@@ -551,6 +553,7 @@ class PodiumWinner {
       'result': result,
       'finalResult': finalResult,
       'points': points,
+      'rank': rank,
       'submittedToAwards': submittedToAwards,
       'archived': archived,
     };
@@ -566,6 +569,7 @@ class PodiumWinner {
       result: (json['result'] ?? 0.0).toDouble(),
       finalResult: json['finalResult'] ?? '',
       points: json['points'] ?? 0,
+      rank: json['rank'] ?? 1,
       submittedToAwards: json['submittedToAwards'] ?? false,
       archived: json['archived'] ?? false,
     );

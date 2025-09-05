@@ -160,6 +160,13 @@ class AppConstants {
     
     return totalPoints / positions.length;
   }
+
+  /// 計算單個並列名次的積分（當多人並列同一名次時）
+  static int calculateTiedRankPoints(int rank, EventType eventType) {
+    // 對於並列名次，直接返回該名次對應的分數
+    // 在真實比賽中，並列第2名的運動員都獲得第2名的分數
+    return calculatePositionPoints(rank, eventType);
+  }
 }
 
 /// 比賽項目模板類別

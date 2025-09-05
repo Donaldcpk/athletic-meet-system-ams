@@ -14,6 +14,7 @@ import '../utils/app_state.dart';
 import '../widgets/common_app_bar.dart';
 import '../services/operation_log_service.dart';
 import '../services/scoring_service.dart';
+import '../services/lane_allocation_service.dart';
 
 /// 裁判系統主界面
 class RefereeSystemScreen extends StatefulWidget {
@@ -55,6 +56,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   // 決賽晉級名單
   final Map<String, List<String>> _finalists = {}; // eventCode -> [studentId]
   final Map<String, List<PodiumWinner>> _podiumResults = {}; // eventCode -> [PodiumWinner]
+  
+  // 田項多次試跳數據存儲
+  final Map<String, List<String>> _fieldAttempts = {}; // studentId_eventCode -> [attempt1, attempt2, ...]
 
   @override
   void initState() {
@@ -435,6 +439,15 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                       label: const Text('生成決賽名單'),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
                     ),
+                    if (event.category == EventCategory.track) ...[
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => _showLaneAllocationDialog(event),
+                        icon: const Icon(Icons.timeline),
+                        label: const Text('生成線道表'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -502,12 +515,14 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                             DataCell(Text(student.classId)),
                             DataCell(
                               SizedBox(
-                                width: 150,
-                                child: _buildResultTextField(
-                                  resultKey: resultKey,
-                                  isInitial: true,
-                                  event: event,
-                                ),
+                                width: event.category == EventCategory.field ? 300 : 150,
+                                child: event.category == EventCategory.field
+                                    ? _buildFieldAttemptsWidget(resultKey, event)
+                                    : _buildResultTextField(
+                                        resultKey: resultKey,
+                                        isInitial: true,
+                                        event: event,
+                                      ),
                               ),
                             ),
                             DataCell(
@@ -576,16 +591,16 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     final eventsWithResults = _getEventsWithPreliminaryResults();
     
     return Row(
-      children: [
+          children: [
         // 左側有初賽成績的項目列表
-        Container(
+            Container(
           width: 350,
-          decoration: BoxDecoration(
+              decoration: BoxDecoration(
             color: Colors.grey[100],
             border: Border(right: BorderSide(color: Colors.grey[300]!)),
-          ),
-          child: Column(
-            children: [
+              ),
+              child: Column(
+                children: [
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -596,7 +611,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   children: [
                     Icon(Icons.list_alt, color: Colors.green),
                     SizedBox(width: 8),
-                    Text(
+                  Text(
                       '可進行決賽的項目',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
@@ -617,7 +632,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                             selectedTileColor: Colors.green[100],
                             title: Text(
                               '${event.code} ${event.name}',
-                              style: TextStyle(
+                    style: TextStyle(
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 color: isSelected ? Colors.green[700] : null,
                               ),
@@ -661,13 +676,13 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     children: [
                       Icon(Icons.emoji_events, size: 48, color: Colors.grey),
                       SizedBox(height: 16),
-                      Text(
+                    Text(
                         '請在左側選擇一個項目開始輸入決賽成績',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                ],
+              ),
+            ),
         ),
       ],
     );
@@ -775,85 +790,106 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
 
   /// 三甲名單界面 - 獨立TAB
   Widget _buildPodiumView() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-          // 項目選擇和名稱顯示
-          Container(
-            padding: const EdgeInsets.all(16),
+    final eventsWithPodium = _getEventsWithPodiumResults();
+    
+    return Row(
+      children: [
+        // 左側有三甲名單的項目列表
+        Container(
+          width: 350,
         decoration: BoxDecoration(
-              color: Colors.amber[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber[200]!),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            color: Colors.grey[100],
+            border: Border(right: BorderSide(color: Colors.grey[300]!)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.amber[50],
+                  border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+                ),
+                child: const Row(
                   children: [
-                    const Icon(Icons.military_tech, color: Colors.amber, size: 28),
-                    const SizedBox(width: 8),
-                                Text(
-                      _selectedEvent != null 
-                          ? '${_selectedEvent!.name} - 三甲名單'
-                          : '三甲名單',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
+                    Icon(Icons.military_tech, color: Colors.amber),
+                    SizedBox(width: 8),
                     Text(
-                      '生成時間：${DateTime.now().toString().substring(0, 16)}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      '已完成決賽項目',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
-                if (_selectedEvent != null) ...[
-                  const SizedBox(height: 8),
-                                Text(
-                    '項目代碼：${_selectedEvent!.code} | '
-                    '類型：${_selectedEvent!.category == EventCategory.track ? '徑賽' : '田賽'} | '
-                    '組別：${_selectedEvent!.divisions.map((d) => d.name).join('、')}',
-          style: TextStyle(
-                                    fontSize: 14,
-                      color: Colors.grey[600],
-                                  ),
-                                ),
-                ],
-                              ],
+              ),
+              Expanded(
+                child: eventsWithPodium.isNotEmpty 
+                    ? ListView.builder(
+                        itemCount: eventsWithPodium.length,
+                        itemBuilder: (context, index) {
+                          final event = eventsWithPodium[index];
+                          final isSelected = _selectedEvent?.code == event.code;
+                          final podiumCount = _podiumResults[event.code]?.length ?? 0;
+                          
+                          return ListTile(
+                            selected: isSelected,
+                            selectedTileColor: Colors.amber[100],
+                            title: Text(
+                              '${event.code} ${event.name}',
+                              style: TextStyle(
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                color: isSelected ? Colors.amber[700] : null,
+                              ),
                             ),
+                            subtitle: Text('三甲名單：$podiumCount人'),
+                            trailing: isSelected 
+                                ? Icon(Icons.arrow_forward_ios, color: Colors.amber[700], size: 16)
+                                : null,
+                            onTap: () {
+          setState(() {
+                                _selectedEvent = event;
+                              });
+                            },
+                          );
+                        },
+                      )
+                    : const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            '暫無已完成的決賽項目\n請先在決賽TAB完成比賽',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
                           ),
-          
-          const SizedBox(height: 16),
-          
-          // 三甲名單內容
-          Expanded(
-            child: _selectedEvent != null 
-                ? _buildPodiumList()
-                : const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.military_tech, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          '請先選擇一個項目',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          '選擇項目後，完成決賽成績輸入即可生成三甲名單',
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
-          textAlign: TextAlign.center,
-        ),
-                      ],
-                    ),
-                  ),
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        
+        // 右側三甲名單顯示
+        Expanded(
+          child: _selectedEvent != null 
+              ? Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _buildPodiumList(),
+                )
+              : const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+                      Icon(Icons.military_tech, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+                      Text(
+                        '請在左側選擇一個項目查看三甲名單',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+          ],
+        ),
+                ),
+        ),
+      ],
+      );
+    }
 
   /// 接力賽界面
   Widget _buildRelayView() {
@@ -908,9 +944,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             onTap: () => _showRelayDialog(event),
           child: Padding(
             padding: const EdgeInsets.all(16),
-        child: Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+              children: [
                     Text(
                     '${event.code} ${event.name}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -970,8 +1006,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     return Container(
                       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
+                        borderRadius: BorderRadius.circular(8),
+                        ),
       child: Column(
                         children: [
           // 標題欄
@@ -984,21 +1020,21 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                 topRight: Radius.circular(8),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                 Row(
                   children: [
                     const Icon(Icons.emoji_events, color: Colors.green),
                     const SizedBox(width: 8),
-                    Text(
+                                Text(
                       '${_selectedEvent!.name} - 三甲名單',
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                  Text(
+                                Text(
                   '生成時間：${DateTime.now().toString().substring(0, 16)}',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
@@ -1006,10 +1042,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   '項目代碼：${_selectedEvent!.code} | '
                   '類型：${_selectedEvent!.category == EventCategory.track ? '徑賽' : '田賽'}',
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
+                                ),
+                              ],
+                            ),
+                          ),
           
           // 三甲名單內容
                           Expanded(
@@ -1047,6 +1083,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                       final index = entry.key;
                       final winner = entry.value;
                       final medals = ['🥇', '🥈', '🥉'];
+                      final medalIndex = winner.rank - 1;
+                      final medal = medalIndex < medals.length ? medals[medalIndex] : '🏅';
                       final student = _appState.students.firstWhere(
                         (s) => s.id == winner.studentId,
                         orElse: () => Student(
@@ -1065,25 +1103,23 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                       return DataRow(
                         color: MaterialStateProperty.resolveWith<Color?>(
                           (Set<MaterialState> states) {
-                            if (index == 0) return Colors.amber[50];
-                            if (index == 1) return Colors.grey[100];
-                            if (index == 2) return Colors.orange[50];
+                            if (winner.rank == 1) return Colors.amber[50];
+                            if (winner.rank == 2) return Colors.grey[100];
+                            if (winner.rank == 3) return Colors.orange[50];
                             return null;
                           },
                         ),
                         cells: [
                           // 名次
                           DataCell(
-                          Container(
+                            Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                                color: index < 3 ? Colors.green[600] : Colors.blue[600],
+                              decoration: BoxDecoration(
+                                color: winner.rank <= 3 ? Colors.green[600] : Colors.blue[600],
                                 borderRadius: BorderRadius.circular(12),
-                            ),
+                              ),
                               child: Text(
-                                index < medals.length 
-                                    ? '${medals[index]} ${index + 1}'
-                                    : '${index + 1}',
+                                '${winner.rank} $medal',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -1135,6 +1171,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                                     result: winner.result,
                                     finalResult: winner.finalResult,
                                     points: winner.points,
+                                    rank: winner.rank,
                                     submittedToAwards: !winner.submittedToAwards,
                                     archived: winner.archived,
                                   );
@@ -1168,6 +1205,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                                     result: winner.result,
                                     finalResult: winner.finalResult,
                                     points: winner.points,
+                                    rank: winner.rank,
                                     submittedToAwards: winner.submittedToAwards,
                                     archived: !winner.archived,
                                   );
@@ -1683,8 +1721,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                               _absStatus[teamKey] = false;
                             }
                           });
-                        }),
-              ],
+                  }),
+                ],
             ),
           ),
                   DataCell(
@@ -1707,9 +1745,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
               );
             });
           }).toList(),
-        ),
-      ),
-    );
+            ),
+          ),
+        );
   }
 
   /// 獲取年級顏色
@@ -1874,7 +1912,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     if (_selectedCategory != null) {
       events = events.where((e) => e.category == _selectedCategory).toList();
     }
-    
+
     // 按搜尋關鍵字篩選
     if (_searchQuery.isNotEmpty) {
       events = events.where((e) =>
@@ -1977,6 +2015,15 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   List<EventInfo> _getEventsWithPreliminaryResults() {
     final allEvents = EventConstants.allEvents.where((e) => e.isScoring && e.category != EventCategory.relay).toList();
     return allEvents.where((event) => _hasEventResults(event)).toList();
+  }
+  
+  /// 獲取有三甲名單的項目列表
+  List<EventInfo> _getEventsWithPodiumResults() {
+    final allEvents = EventConstants.allEvents.where((e) => e.isScoring).toList();
+    return allEvents.where((event) => 
+        _podiumResults.containsKey(event.code) && 
+        _podiumResults[event.code]!.isNotEmpty
+    ).toList();
   }
   
   /// 獲取項目的決賽人數
@@ -2313,30 +2360,43 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       return;
     }
 
-    // 排序並生成三甲名單
+    // 排序並處理並列名次
     final sortedResults = validResults.entries.toList();
     if (event.category == EventCategory.track) {
       sortedResults.sort((a, b) => a.value.compareTo(b.value)); // 時間越短越好
-    } else {
+      } else {
       sortedResults.sort((a, b) => b.value.compareTo(a.value)); // 距離越大越好
-    }
-
+      }
+    
     final podium = <PodiumWinner>[];
-    for (int i = 0; i < sortedResults.length && i < 3; i++) {
+    int currentRank = 1;
+    double? lastResult;
+    
+    for (int i = 0; i < sortedResults.length && currentRank <= 3; i++) {
       final entry = sortedResults[i];
       final studentId = entry.key;
       final result = entry.value;
       final student = _appState.students.firstWhere((s) => s.id == studentId);
 
+      // 處理並列名次
+      if (lastResult != null && result != lastResult) {
+        currentRank = i + 1; // 跳到下一個排名
+      }
+      
+      if (currentRank <= 3) {
       podium.add(PodiumWinner(
-        studentId: studentId,
+          studentId: studentId,
             studentName: student.name,
             studentCode: student.studentCode,
             isStaff: student.isStaff,
-        result: result,
-        finalResult: _formatResult(result, event),
-        points: AppConstants.individualPointsTable[i + 1] ?? 0,
-      ));
+          result: result,
+          finalResult: _formatResult(result, event),
+          points: AppConstants.calculateTiedRankPoints(currentRank, _getEventType(event)),
+          rank: currentRank, // 新增排名字段
+        ));
+      }
+      
+      lastResult = result;
     }
 
     setState(() {
@@ -2550,6 +2610,138 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     return _finalsControllers[teamKey]!;
   }
 
+  /// 構建田項多次試跳界面
+  Widget _buildFieldAttemptsWidget(String resultKey, EventInfo event) {
+    final attempts = _fieldAttempts[resultKey] ?? ['', '', '', '', '', ''];
+    if (_fieldAttempts[resultKey] == null) {
+      _fieldAttempts[resultKey] = attempts;
+    }
+    
+    // 檢查特殊狀態
+    final isDNF = _dnfStatus[resultKey] ?? false;
+    final isDQ = _dqStatus[resultKey] ?? false;
+    final isABS = _absStatus[resultKey] ?? false;
+    final hasSpecialStatus = isDNF || isDQ || isABS;
+    
+    if (hasSpecialStatus) {
+      final statusText = isDNF ? 'DNF' : (isDQ ? 'DQ' : 'ABS');
+    return Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(4),
+          color: Colors.grey[200],
+        ),
+        child: Text(
+          statusText,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+      ),
+    );
+  }
+    
+    return Column(
+      children: [
+        // 試跳次數選擇
+        Row(
+          children: [
+            Text('試跳次數：', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            const SizedBox(width: 8),
+            ...List.generate(6, (index) {
+              final attemptNumber = index + 1;
+              return Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      // 調整試跳次數
+                      _setFieldAttemptCount(resultKey, attemptNumber);
+                    });
+                  },
+                  child: Container(
+                    width: 20,
+                    height: 20,
+          decoration: BoxDecoration(
+                      color: _getActiveAttemptCount(resultKey) >= attemptNumber 
+                          ? Colors.blue 
+                          : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        attemptNumber.toString(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: _getActiveAttemptCount(resultKey) >= attemptNumber 
+                              ? Colors.white 
+                              : Colors.grey[600],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // 試跳成績輸入框
+        Row(
+          children: List.generate(6, (index) {
+            final isActive = index < _getActiveAttemptCount(resultKey);
+            return Container(
+              width: 45,
+              margin: const EdgeInsets.only(right: 2),
+              child: isActive
+                  ? TextField(
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.all(4),
+                        hintText: (index + 1).toString(),
+                        hintStyle: TextStyle(
+                          color: Colors.grey[300],
+                          fontSize: 10,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[\d\.]+'))
+                      ],
+                      onChanged: (value) {
+                        _updateFieldAttempt(resultKey, index, value);
+                      },
+                      controller: _getFieldAttemptController(resultKey, index),
+                    )
+                  : Container(
+                      height: 32,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(4),
+                        color: Colors.grey[100],
+                      ),
+                    ),
+            );
+          }),
+        ),
+        const SizedBox(height: 4),
+        // 最佳成績顯示
+        Text(
+          '最佳：${_getBestFieldResult(resultKey)}',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: Colors.green[700],
+          ),
+        ),
+      ],
+    );
+  }
+
   /// 構建成績輸入框 - 使用TextEditingController確保數據持久化
   Widget _buildResultTextField({
     required String resultKey,
@@ -2571,7 +2763,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           border: Border.all(color: Colors.grey[300]!),
           borderRadius: BorderRadius.circular(4),
           color: Colors.grey[200],
-        ),
+          ),
             child: Text(
           statusText,
           style: TextStyle(
@@ -2759,5 +2951,371 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       _selectedGender = null;
       _searchController.clear();
     });
+  }
+
+  /// 田項多次試跳輔助方法
+  
+  /// 設置田項試跳次數
+  void _setFieldAttemptCount(String resultKey, int count) {
+    final attempts = _fieldAttempts[resultKey] ?? ['', '', '', '', '', ''];
+    _fieldAttempts[resultKey] = attempts;
+    
+    // 清空超出次數的成績
+    for (int i = count; i < 6; i++) {
+      attempts[i] = '';
+    }
+    
+    _saveResultsData();
+  }
+  
+  /// 獲取田項當前設定的試跳次數
+  int _getActiveAttemptCount(String resultKey) {
+    final attempts = _fieldAttempts[resultKey] ?? ['', '', '', '', '', ''];
+    
+    // 從後往前找到最後一個有內容的試跳，確定活躍的試跳次數
+    for (int i = 5; i >= 0; i--) {
+      if (attempts[i].isNotEmpty) {
+        return i + 1;
+      }
+    }
+    
+    // 默認3次試跳
+    return 3;
+  }
+  
+  /// 更新田項單次試跳成績
+  void _updateFieldAttempt(String resultKey, int attemptIndex, String value) {
+    final attempts = _fieldAttempts[resultKey] ?? ['', '', '', '', '', ''];
+    attempts[attemptIndex] = value;
+    _fieldAttempts[resultKey] = attempts;
+    
+    // 更新最佳成績到主成績數據
+    final bestResult = _getBestFieldResult(resultKey);
+    _preliminaryResults[resultKey] = bestResult;
+    
+    _saveResultsData();
+    
+    // 立即計算參與分
+    if (bestResult.isNotEmpty) {
+      _updateParticipationPointsForResult(resultKey);
+    }
+  }
+  
+  /// 獲取田項試跳的TextEditingController
+  TextEditingController _getFieldAttemptController(String resultKey, int attemptIndex) {
+    final controllerKey = '${resultKey}_attempt_$attemptIndex';
+    
+    if (!_preliminaryControllers.containsKey(controllerKey)) {
+      final controller = TextEditingController();
+      final attempts = _fieldAttempts[resultKey] ?? ['', '', '', '', '', ''];
+      controller.text = attempts[attemptIndex];
+      _preliminaryControllers[controllerKey] = controller;
+    }
+    
+    return _preliminaryControllers[controllerKey]!;
+  }
+  
+  /// 獲取田項最佳成績
+  String _getBestFieldResult(String resultKey) {
+    final attempts = _fieldAttempts[resultKey] ?? ['', '', '', '', '', ''];
+    final validAttempts = attempts
+        .where((attempt) => attempt.isNotEmpty)
+        .map((attempt) => double.tryParse(attempt))
+        .where((value) => value != null)
+        .map((value) => value!)
+        .toList();
+    
+    if (validAttempts.isEmpty) return '';
+    
+    // 田賽：數值越大越好
+    validAttempts.sort((a, b) => b.compareTo(a));
+    return validAttempts.first.toStringAsFixed(2);
+  }
+
+  /// 顯示線道分配對話框
+  void _showLaneAllocationDialog(EventInfo event) {
+    final participants = _getSortedParticipants(event);
+    
+    if (participants.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ 沒有參賽運動員'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    if (participants.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ 參賽人數至少需要3人才能分配線道'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    try {
+      final allocations = LaneAllocationService.allocateHeatsAndLanes(participants);
+      
+      showDialog(
+        context: context,
+        builder: (context) => _buildLaneAllocationDialog(event, allocations),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ 線道分配失敗：$e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
+  /// 構建線道分配對話框
+  Widget _buildLaneAllocationDialog(EventInfo event, List<LaneAllocation> allocations) {
+    return Dialog(
+      child: Container(
+        width: 800,
+        height: 600,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 標題
+            Row(
+              children: [
+                Icon(Icons.timeline, color: Colors.purple[600], size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                        '${event.name} - 線道分配表',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '共 ${allocations.fold(0, (sum, heat) => sum + heat.assignments.length)} 人，分為 ${allocations.length} 組',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            
+            // 線道分配內容
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: allocations.map((allocation) => 
+                    _buildHeatTable(allocation)
+                  ).toList(),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            // 操作按鈕
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('關閉'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: () => _printLaneAllocation(event, allocations),
+                  icon: const Icon(Icons.print),
+                  label: const Text('列印線道表'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// 構建單個熱身賽表格
+  Widget _buildHeatTable(LaneAllocation allocation) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 熱身賽標題
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.purple[50],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.flag, color: Colors.purple[600]),
+                const SizedBox(width: 8),
+                Text(
+                  allocation.heatName,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Text(
+                  '${allocation.assignments.length} 人',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          
+          // 線道表格
+          DataTable(
+            columnSpacing: 24,
+            headingRowHeight: 40,
+            dataRowHeight: 50,
+            columns: const [
+              DataColumn(label: Text('線道', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('參賽編號', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('姓名', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('班級', style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('種子', style: TextStyle(fontWeight: FontWeight.bold))),
+            ],
+            rows: allocation.assignments.map((assignment) {
+              return DataRow(
+                cells: [
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.purple[600],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        assignment.lane.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  DataCell(Text(assignment.student.studentCode)),
+                  DataCell(Text(assignment.student.name)),
+                  DataCell(Text(assignment.student.classId)),
+                  DataCell(Text('#${assignment.seedRank}')),
+                ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// 列印線道分配表
+  void _printLaneAllocation(EventInfo event, List<LaneAllocation> allocations) {
+    final report = LaneAllocationService.generateAllocationReport(allocations);
+    
+    // 創建列印內容
+    final htmlContent = '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>${event.name} - 線道分配表</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; text-align: center; }
+            h2 { color: #666; border-bottom: 2px solid #666; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+            .lane { background-color: #9c27b0; color: white; font-weight: bold; }
+            .print-info { font-size: 12px; color: #666; text-align: center; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <h1>${event.name} - 線道分配表</h1>
+        <div class="print-info">
+            總參賽人數：${allocations.fold(0, (sum, heat) => sum + heat.assignments.length)} 人 | 
+            分組數：${allocations.length} 組 | 
+            生成時間：${DateTime.now().toString().substring(0, 16)}
+        </div>
+        
+        ${allocations.map((allocation) => '''
+        <h2>${allocation.heatName}</h2>
+        <table>
+            <tr>
+                <th>線道</th>
+                <th>參賽編號</th>
+                <th>姓名</th>
+                <th>班級</th>
+                <th>種子排名</th>
+            </tr>
+            ${allocation.assignments.map((assignment) => '''
+            <tr>
+                <td class="lane">${assignment.lane}</td>
+                <td>${assignment.student.studentCode}</td>
+                <td>${assignment.student.name}</td>
+                <td>${assignment.student.classId}</td>
+                <td>#${assignment.seedRank}</td>
+            </tr>
+            ''').join('')}
+        </table>
+        ''').join('')}
+    </body>
+    </html>
+    ''';
+    
+    // 打開新窗口進行列印
+    final blob = html.Blob([htmlContent], 'text/html');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final window = html.window.open(url, '_blank');
+    
+    // 給一點時間載入，然後觸發列印對話框
+    Future.delayed(const Duration(milliseconds: 500), () {
+      // 用戶需要手動按 Ctrl+P 進行列印
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ 線道分配表已在新窗口打開，請按 Ctrl+P 進行列印'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  /// 將EventCategory轉換為EventType
+  EventModel.EventType _getEventType(EventInfo event) {
+    switch (event.category) {
+      case EventCategory.relay:
+        return EventModel.EventType.relay;
+      case EventCategory.track:
+        return EventModel.EventType.individual;
+      case EventCategory.field:
+        return EventModel.EventType.individual;
+      case EventCategory.special:
+        return EventModel.EventType.team;
+      default:
+        return EventModel.EventType.individual;
+    }
   }
 }
