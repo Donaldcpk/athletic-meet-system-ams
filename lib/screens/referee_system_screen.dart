@@ -2689,22 +2689,28 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     });
                   },
                   child: Container(
-                    width: 28,
-                    height: 28,
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
                       color: _getActiveAttemptCount(resultKey) >= attemptNumber 
                           ? Colors.blue 
                           : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _getActiveAttemptCount(resultKey) >= attemptNumber 
+                            ? Colors.blue[700]! 
+                            : Colors.grey[400]!,
+                        width: 1,
+                      ),
                     ),
                     child: Center(
                       child: Text(
                         attemptNumber.toString(),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: _getActiveAttemptCount(resultKey) >= attemptNumber 
                               ? Colors.white 
-                              : Colors.grey[600],
+                              : Colors.grey[700],
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -2715,14 +2721,14 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             }),
           ],
         ),
-        const SizedBox(height: 8),
-        // 試跳成績輸入框
+        const SizedBox(height: 12),
+        // 試投成績輸入框
         Row(
           children: List.generate(6, (index) {
             final isActive = index < _getActiveAttemptCount(resultKey);
             return Container(
-              width: 45,
-              margin: const EdgeInsets.only(right: 2),
+              width: 50,
+              margin: const EdgeInsets.only(right: 4),
               child: isActive
                   ? TextField(
                       decoration: InputDecoration(

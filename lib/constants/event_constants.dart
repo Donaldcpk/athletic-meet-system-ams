@@ -127,157 +127,76 @@ class EventConstants {
 
   /// 班際接力項目 (4x100c, 4x400c)
   static const List<EventInfo> classRelayEvents = [
-    // 甲組班際接力 (中5-6)
     EventInfo(
-      code: '4x100c_A', 
-      name: '4x100c (甲組)', 
+      code: '4x100c', 
+      name: '4x100c (班際接力)', 
       category: EventCategory.relay, 
-      divisions: [Division.senior], 
+      divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
       isClassRelay: true,
       maxParticipants: 4,
-      specialRules: '甲組班際接力，每班最多一隊，每年級分別排名',
+      specialRules: '班際接力，每班最多一隊，每年級分別排名',
     ),
     EventInfo(
-      code: '4x400c_A', 
-      name: '4x400c (甲組)', 
+      code: '4x400c', 
+      name: '4x400c (班際接力)', 
       category: EventCategory.relay, 
-      divisions: [Division.senior], 
+      divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
       isClassRelay: true,
       maxParticipants: 4,
-      specialRules: '甲組班際接力，每班最多一隊，每年級分別排名',
-    ),
-    // 乙組班際接力 (中3-4)
-    EventInfo(
-      code: '4x100c_B', 
-      name: '4x100c (乙組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.junior], 
-      genders: [Gender.mixed],
-      isClassRelay: true,
-      maxParticipants: 4,
-      specialRules: '乙組班際接力，每班最多一隊，每年級分別排名',
-    ),
-    EventInfo(
-      code: '4x400c_B', 
-      name: '4x400c (乙組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.junior], 
-      genders: [Gender.mixed],
-      isClassRelay: true,
-      maxParticipants: 4,
-      specialRules: '乙組班際接力，每班最多一隊，每年級分別排名',
-    ),
-    // 丙組班際接力 (中1-2)
-    EventInfo(
-      code: '4x100c_C', 
-      name: '4x100c (丙組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.primary], 
-      genders: [Gender.mixed],
-      isClassRelay: true,
-      maxParticipants: 4,
-      specialRules: '丙組班際接力，每班最多一隊，每年級分別排名',
-    ),
-    EventInfo(
-      code: '4x400c_C', 
-      name: '4x400c (丙組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.primary], 
-      genders: [Gender.mixed],
-      isClassRelay: true,
-      maxParticipants: 4,
-      specialRules: '丙組班際接力，每班最多一隊，每年級分別排名',
+      specialRules: '班際接力，每班最多一隊，每年級分別排名',
     ),
   ];
 
   /// 社制接力項目 (4x100s, 4x400s)
   static const List<EventInfo> societyRelayEvents = [
-    // 甲組社制接力
     EventInfo(
-      code: '4x100s_A', 
-      name: '4x100s (甲組)', 
+      code: '4x100s', 
+      name: '4x100s (社制接力)', 
       category: EventCategory.relay, 
-      divisions: [Division.senior], 
+      divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
-      specialRules: '甲組社制接力，每年級分別排名',
+      specialRules: '社制接力，每社最多一隊，每年級分別排名',
     ),
     EventInfo(
-      code: '4x400s_A', 
-      name: '4x400s (甲組)', 
+      code: '4x400s', 
+      name: '4x400s (社制接力)', 
       category: EventCategory.relay, 
-      divisions: [Division.senior], 
+      divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
-      specialRules: '甲組社制接力，每年級分別排名',
-    ),
-    // 乙組社制接力
-    EventInfo(
-      code: '4x100s_B', 
-      name: '4x100s (乙組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.junior], 
-      genders: [Gender.mixed],
-      specialRules: '乙組社制接力，每年級分別排名',
-    ),
-    EventInfo(
-      code: '4x400s_B', 
-      name: '4x400s (乙組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.junior], 
-      genders: [Gender.mixed],
-      specialRules: '乙組社制接力，每年級分別排名',
-    ),
-    // 丙組社制接力
-    EventInfo(
-      code: '4x100s_C', 
-      name: '4x100s (丙組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.primary], 
-      genders: [Gender.mixed],
-      specialRules: '丙組社制接力，每年級分別排名',
-    ),
-    EventInfo(
-      code: '4x400s_C', 
-      name: '4x400s (丙組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.primary], 
-      genders: [Gender.mixed],
-      specialRules: '丙組社制接力，每年級分別排名',
+      specialRules: '社制接力，每社最多一隊，每年級分別排名',
     ),
   ];
 
   /// 特殊接力項目 (10人接力、家長接力、師生接力)
   static const List<EventInfo> specialRelayEvents = [
-    // 10人接力
     EventInfo(
       code: '10R', 
       name: '10人接力', 
       category: EventCategory.special, 
-      divisions: Division.values, 
+      divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
       maxParticipants: 10,
-      specialRules: '10人接力，每班最多一隊，混合年級排名',
+      specialRules: '10人接力，每班最多一隊，每年級分別排名',
     ),
-    // 家長接力
     EventInfo(
       code: 'PARENT_R', 
       name: '家長接力', 
       category: EventCategory.special, 
-      divisions: Division.values, 
+      divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
       maxParticipants: 4,
-      specialRules: '家長接力，每班最多一隊家長，混合年級排名',
+      specialRules: '家長接力，每班最多一隊家長，每年級分別排名',
     ),
-    // 師生接力
     EventInfo(
       code: 'TEACHER_R', 
       name: '師生接力', 
       category: EventCategory.special, 
-      divisions: Division.values, 
+      divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
       maxParticipants: 4,
-      specialRules: '師生接力，老師+學生混合，混合年級排名',
+      specialRules: '師生接力，老師+學生混合，每年級分別排名',
     ),
   ];
 
