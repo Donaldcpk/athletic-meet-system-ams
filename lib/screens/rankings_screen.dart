@@ -32,7 +32,7 @@ class _RankingsScreenState extends State<RankingsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this); // 還原為4個標籤頁
+    _tabController = TabController(length: 3, vsync: this); // 修改為3個標籤頁
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -83,7 +83,6 @@ class _RankingsScreenState extends State<RankingsScreen>
                   Tab(icon: Icon(Icons.person), text: '個人排名'),
                   Tab(icon: Icon(Icons.school), text: '班分統計'),
                   Tab(icon: Icon(Icons.emoji_events), text: '頒獎名單'),
-                  Tab(icon: Icon(Icons.card_giftcard), text: '頒獎資料'),
                 ],
               ),
             ),
@@ -100,7 +99,6 @@ class _RankingsScreenState extends State<RankingsScreen>
                 _buildIndividualRankingView(), // 個人排名
                 _buildClassPointsView(), // 班分統計
                 _buildAwardListView(), // 頒獎名單
-                _buildAwardDataView(), // 頒獎資料
               ],
             ),
           ),

@@ -64,6 +64,11 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
         backRoute: '/dashboard',
         actions: [
           IconButton(
+            icon: const Icon(Icons.table_chart),
+            onPressed: _showEventCodeMapping,
+            tooltip: '項目代碼對照表',
+          ),
+          IconButton(
             icon: const Icon(Icons.add_circle),
             onPressed: _showAddEventDialog,
             tooltip: '新增臨時項目',
@@ -681,5 +686,163 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
         ),
       ),
     );
+  }
+
+  /// 顯示項目代碼對照表
+  void _showEventCodeMapping() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.table_chart, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      '運動項目代碼對照表',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(),
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildMappingSection('甲組女子項目 (中5-6)', EventConstants.seniorFemaleEvents_G),
+                      _buildMappingSection('乙組女子項目 (中3-4)', EventConstants.juniorFemaleEvents_G),
+                      _buildMappingSection('丙組女子項目 (中1-2)', EventConstants.primaryFemaleEvents_G),
+                      _buildMappingSection('甲組男子項目 (中5-6)', EventConstants.seniorMaleEvents_B),
+                      _buildMappingSection('乙組男子項目 (中3-4)', EventConstants.juniorMaleEvents_B),
+                      _buildMappingSection('丙組男子項目 (中1-2)', EventConstants.primaryMaleEvents_B),
+                      _buildMappingSection('班際接力項目', EventConstants.classRelayEvents),
+                      _buildMappingSection('社制接力項目', EventConstants.societyRelayEvents),
+                      _buildMappingSection('特殊接力項目', EventConstants.specialRelayEvents),
+                      _buildMappingSection('公開項目', EventConstants.openEvents),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.info, color: Colors.orange, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    '共 ${EventConstants.allEvents.length} 個項目',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 建立對照表區段
+  Widget _buildMappingSection(String title, List<EventInfo> events) {
+    if (events.isEmpty) return const SizedBox.shrink();
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
+            ),
+            const SizedBox(height: 12),
+            Table(
+              border: TableBorder.all(color: Colors.grey[300]!),
+              columnWidths: const {
+                0: FlexColumnWidth(1),
+                1: FlexColumnWidth(2),
+                2: FlexColumnWidth(1),
+              },
+              children: [
+                const TableRow(
+                  decoration: BoxDecoration(color: Color(0xFFF5F5F5)),
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text('代碼', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text('項目名稱', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text('類型', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+                ...events.map((event) => TableRow(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                        event.code,
+                        style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Text(event.name),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _getCategoryColor(event.category),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          event.category.displayName,
+                          style: const TextStyle(fontSize: 11, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                )),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 獲取類別顏色
+  Color _getCategoryColor(EventCategory category) {
+    switch (category) {
+      case EventCategory.track:
+        return Colors.green;
+      case EventCategory.field:
+        return Colors.orange;
+      case EventCategory.relay:
+        return Colors.blue;
+      case EventCategory.special:
+        return Colors.purple;
+    }
   }
 } 

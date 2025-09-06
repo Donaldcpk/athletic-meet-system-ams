@@ -171,13 +171,28 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
               Expanded(
                 flex: 3,
                 child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      // 觸發界面重新渲染以應用搜尋篩選
+                    });
+                  },
+                  decoration: InputDecoration(
                     hintText: '搜尋項目、參賽編號、姓名...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              setState(() {
+                                _searchController.clear();
+                              });
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -1027,9 +1042,21 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   children: [
                     const Icon(Icons.emoji_events, color: Colors.green),
                     const SizedBox(width: 8),
-                                Text(
-                      '${_selectedEvent!.name} - 三甲名單',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Text(
+                        '${_selectedEvent!.name} - 三甲名單',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => _printPodiumResults(_selectedEvent!),
+                      icon: const Icon(Icons.print, size: 18),
+                      label: const Text('列印'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
                     ),
                   ],
                 ),
@@ -2645,10 +2672,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     
     return Column(
       children: [
-        // 試跳次數選擇
+        // 試投次數選擇
         Row(
           children: [
-            Text('試跳次數：', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            Text('試投次數：', style: TextStyle(fontSize: 14, color: Colors.grey[700], fontWeight: FontWeight.w500)),
             const SizedBox(width: 8),
             ...List.generate(6, (index) {
               final attemptNumber = index + 1;
@@ -2662,19 +2689,19 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     });
                   },
                   child: Container(
-                    width: 20,
-                    height: 20,
-          decoration: BoxDecoration(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
                       color: _getActiveAttemptCount(resultKey) >= attemptNumber 
                           ? Colors.blue 
                           : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Center(
                       child: Text(
                         attemptNumber.toString(),
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           color: _getActiveAttemptCount(resultKey) >= attemptNumber 
                               ? Colors.white 
                               : Colors.grey[600],
@@ -3298,6 +3325,132 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('✅ 線道分配表已在新窗口打開，請按 Ctrl+P 進行列印'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  /// 列印三甲名單
+  void _printPodiumResults(EventInfo event) {
+    final podium = _podiumResults[event.code];
+    if (podium == null || podium.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ 此項目暫無三甲名單可列印')),
+      );
+      return;
+    }
+
+    final htmlContent = '''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${event.name} - 三甲名單</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .title { font-size: 24px; font-weight: bold; color: #333; }
+        .subtitle { font-size: 14px; color: #666; margin-top: 10px; }
+        .medal-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .medal-table th, .medal-table td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        .medal-table th { background-color: #f5f5f5; font-weight: bold; }
+        .rank-1 { background-color: #fff9c4; font-weight: bold; }
+        .rank-2 { background-color: #f5f5f5; font-weight: bold; }
+        .rank-3 { background-color: #fff4e6; font-weight: bold; }
+        .medal { font-size: 18px; }
+        .print-info { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">🏆 ${event.name} - 三甲名單</div>
+        <div class="subtitle">
+            項目代碼：${event.code} |
+            項目類型：${event.category == EventCategory.track ? '徑賽' : event.category == EventCategory.field ? '田賽' : '接力賽'} |
+            生成時間：${DateTime.now().toString().substring(0, 16)}
+        </div>
+    </div>
+    
+    <table class="medal-table">
+        <thead>
+            <tr>
+                <th>名次</th>
+                <th>參賽編號</th>
+                <th>姓名</th>
+                <th>班別</th>
+                <th>學號</th>
+                <th>成績</th>
+                <th>積分</th>
+            </tr>
+        </thead>
+        <tbody>
+''';
+
+    String tableRows = '';
+    for (final winner in podium) {
+      final student = _appState.students.firstWhere(
+        (s) => s.id == winner.studentId,
+        orElse: () => Student(
+          id: winner.studentId,
+          name: winner.studentName,
+          classId: 'Unknown',
+          studentNumber: '00',
+          gender: Gender.male,
+          division: Division.senior,
+          grade: 1,
+          dateOfBirth: DateTime.now(),
+          isStaff: false,
+        ),
+      );
+
+      final medals = ['🥇', '🥈', '🥉'];
+      final medalIndex = winner.rank - 1;
+      final medal = medalIndex < medals.length ? medals[medalIndex] : '🏅';
+      final rankClass = winner.rank == 1 ? 'rank-1' : 
+                       winner.rank == 2 ? 'rank-2' : 
+                       winner.rank == 3 ? 'rank-3' : '';
+
+      tableRows += '''
+            <tr class="$rankClass">
+                <td><span class="medal">$medal</span> 第${winner.rank}名</td>
+                <td>${student.studentCode}</td>
+                <td>${student.name}</td>
+                <td>${student.classId}</td>
+                <td>${student.studentNumber}</td>
+                <td>${winner.finalResult}</td>
+                <td>${winner.points}</td>
+            </tr>
+''';
+    }
+
+    final fullHtml = htmlContent + tableRows + '''
+        </tbody>
+    </table>
+    
+    <div class="print-info">
+        列印時間：${DateTime.now().toString().substring(0, 19)} | 
+        Athletic Meet System v1.0 | 
+        共${podium.length}人獲獎
+    </div>
+    
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html>
+''';
+
+    final blob = html.Blob([fullHtml], 'text/html');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    html.window.open(url, '_blank');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ 三甲名單已在新窗口打開，請按 Ctrl+P 進行列印'),
         backgroundColor: Colors.green,
       ),
     );
