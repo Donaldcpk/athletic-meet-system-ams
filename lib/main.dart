@@ -9,6 +9,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/enhanced_class_points_screen.dart';
 import 'screens/professional_data_management_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/test_features_screen.dart';
 import 'utils/app_state.dart';
 import 'services/user_service.dart';
 import 'services/operation_log_service.dart';
@@ -49,6 +50,7 @@ class AthleticMeetSystemApp extends StatelessWidget {
       '/reports': (context) => const ReportsScreen(),
       '/class_points': (context) => const EnhancedClassPointsScreen(),
       '/data_management': (context) => const ProfessionalDataManagementScreen(),
+      '/test_features': (context) => const TestFeaturesScreen(),
     };
   }
 }

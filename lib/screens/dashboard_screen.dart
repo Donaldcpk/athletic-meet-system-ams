@@ -44,6 +44,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
             tooltip: '系統設置',
           ),
+          // 🧪 測試功能按鈕
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: Colors.red[600],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.yellow, width: 2),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.bug_report, color: Colors.white),
+              onPressed: () {
+                Navigator.pushNamed(context, '/test_features');
+              },
+              tooltip: '🧪 測試所有功能',
+            ),
+          ),
         ],
       ),
       body: SingleChildScrollView(
