@@ -551,14 +551,22 @@ class _FileImportDialogState extends State<FileImportDialog> {
               ),
               const Spacer(),
               if (result.hasErrors)
-                OutlinedButton.icon(
-                  onPressed: _downloadErrorReport,
-                  icon: const Icon(Icons.download, size: 16),
-                  label: const Text('下載錯誤報告'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red[700],
-                    side: BorderSide(color: Colors.red[300]!),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.orange[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange[400]!, width: 2),
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: _downloadErrorReport,
+                    icon: const Icon(Icons.file_download, size: 20),
+                    label: const Text('📄 下載詳細錯誤報告', style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange[300],
+                      foregroundColor: Colors.orange[900],
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      elevation: 4,
+                    ),
                   ),
                 ),
             ],

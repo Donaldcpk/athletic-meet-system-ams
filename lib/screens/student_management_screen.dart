@@ -92,13 +92,22 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
               tooltip: '清除樣本數據',
             ),
           ],
-          // 清除所有學生功能 - 只有管理員可見
-          if (UserService.hasPermission(UserPermissions.clearData) && _appState.students.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear_all, color: Colors.red),
-              onPressed: _clearAllStudents,
-              tooltip: '清除所有學生',
+          // 🗑️ 清除所有學生功能 - 只有管理員可見
+          if (UserService.hasPermission(UserPermissions.clearData) && _appState.students.isNotEmpty) ...[
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.red[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red[300]!, width: 2),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.delete_forever, color: Colors.red, size: 28),
+                onPressed: _clearAllStudents,
+                tooltip: '🗑️ 危險：清除所有學生數據',
+              ),
             ),
+            const SizedBox(width: 8),
+          ],
           IconButton(
             icon: const Icon(Icons.file_download),
             onPressed: _downloadTemplate,
