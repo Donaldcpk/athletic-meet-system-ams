@@ -478,7 +478,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         ),
       );
     }
-    
+
     return SingleChildScrollView(
       child: DataTable(
         columnSpacing: 20,
@@ -553,7 +553,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       children: [
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
+        decoration: BoxDecoration(
             color: Colors.purple[50],
             border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
           ),
@@ -572,7 +572,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   color: Colors.blue[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
+        child: Text(
                   '${relayEvents.length} 個項目',
                   style: TextStyle(fontSize: 12, color: Colors.blue[800]),
                 ),
@@ -1174,108 +1174,60 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
-  /// 田賽成績輸入 - 重新設計避免重疊
+  /// 田賽成績輸入 - 簡潔版本，移除重複的狀態按鈕
   Widget _buildFieldAttemptsWidget(String resultKey, EventInfo event) {
     final activeCount = _getActiveAttemptCount(resultKey);
     
     return Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      width: 400, // 固定寬度
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         color: Colors.grey[50],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 標題和控制區域
+          // 嘗試次數選擇
           Row(
             children: [
-              Text(
-                '田賽成績',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
+              const Text('嘗試次數:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 8),
+              Container(
+                width: 100,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: Colors.grey[400]!),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: DropdownButtonFormField<int>(
+                  value: activeCount,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    isDense: true,
+                  ),
+                  style: const TextStyle(fontSize: 11),
+                  items: List.generate(6, (index) {
+                    final count = index + 1;
+                    return DropdownMenuItem<int>(
+                      value: count,
+                      child: Text('$count次'),
+                    );
+                  }),
+                  onChanged: (value) => _setActiveAttemptCount(resultKey, value ?? 3),
                 ),
               ),
-              const SizedBox(width: 16),
-              
-              // 嘗試次數選擇
-              if (UserService.hasPermission(UserPermissions.inputScores)) ...[
-                Container(
-                  width: 100,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey[400]!),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: DropdownButtonFormField<int>(
-                    value: activeCount,
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      isDense: true,
-                    ),
-                    style: const TextStyle(fontSize: 12),
-                    items: List.generate(6, (index) {
-                      final count = index + 1;
-                      return DropdownMenuItem<int>(
-                        value: count,
-                        child: Text('$count次嘗試'),
-                      );
-                    }),
-                    onChanged: (value) => _setActiveAttemptCount(resultKey, value ?? 3),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                
-                // 清除按鈕
-                Container(
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    border: Border.all(color: Colors.red[300]!),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () => _clearAllFieldAttempts(resultKey),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: Colors.red[700],
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    child: const Text('清除', style: TextStyle(fontSize: 12)),
-                  ),
-                ),
-              ],
-              
-              const Spacer(),
-              
-              // 狀態選擇
-              if (UserService.hasPermission(UserPermissions.inputScores)) ...[
-                Wrap(
-                  spacing: 4,
-                  children: [
-                    _buildStatusChip('DNF', _dnfStatus[resultKey] ?? false, () => _toggleStatus(resultKey, 'DNF')),
-                    _buildStatusChip('DQ', _dqStatus[resultKey] ?? false, () => _toggleStatus(resultKey, 'DQ')),
-                    _buildStatusChip('ABS', _absStatus[resultKey] ?? false, () => _toggleStatus(resultKey, 'ABS')),
-                  ],
-                ),
-              ] else ...[
-                _buildReadOnlyStatusDisplay(resultKey),
-              ],
             ],
           ),
           
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           
-          // 成績輸入區域 - 固定高度避免重疊
-          Container(
-            height: 80,
+          // 成績輸入區域
+          SizedBox(
+            height: 60,
             child: Row(
               children: List.generate(activeCount, (index) {
                 final attempts = _fieldAttempts[resultKey] ?? [];
@@ -1285,33 +1237,32 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                 
                 return Expanded(
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    height: 80,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: isBest ? Colors.green[600]! : Colors.grey[300]!,
                         width: isBest ? 2 : 1,
                       ),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(4),
                       color: isBest ? Colors.green[50] : Colors.white,
                     ),
                     child: Column(
                       children: [
-                        // 標題區域
+                        // 標題
                         Container(
-                          height: 28,
+                          height: 20,
                           decoration: BoxDecoration(
                             color: isBest ? Colors.green[100] : Colors.grey[100],
                             borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(8),
-                              topRight: Radius.circular(8),
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
                             ),
                           ),
                           child: Center(
                             child: Text(
                               '第${index + 1}次',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 9,
                                 fontWeight: FontWeight.bold,
                                 color: isBest ? Colors.green[800] : Colors.grey[700],
                               ),
@@ -1319,42 +1270,30 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                           ),
                         ),
                         
-                        // 輸入區域
+                        // 輸入框
                         Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                            child: UserService.hasPermission(UserPermissions.inputScores)
-                                ? TextFormField(
-                                    controller: _getFieldAttemptController(resultKey, index),
-                                    decoration: const InputDecoration(
-                                      hintText: '0.00',
-                                      suffixText: 'm',
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                                      isDense: true,
-                                    ),
-                                    keyboardType: TextInputType.number,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: isBest ? FontWeight.bold : FontWeight.normal,
-                                      color: isBest ? Colors.green[800] : Colors.black,
-                                    ),
-                                    onChanged: (value) {
-                                      _updateFieldAttempt(resultKey, index, value);
-                                    },
-                                  )
-                                : Center(
-                                    child: Text(
-                                      _getFieldAttemptValue(resultKey, index),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: isBest ? FontWeight.bold : FontWeight.normal,
-                                        color: isBest ? Colors.green[800] : Colors.black87,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: TextFormField(
+                              controller: _getFieldAttemptController(resultKey, index),
+                              decoration: const InputDecoration(
+                                hintText: '0.00',
+                                suffixText: 'm',
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                                isDense: true,
+                              ),
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: isBest ? FontWeight.bold : FontWeight.normal,
+                                color: isBest ? Colors.green[800] : Colors.black,
+                              ),
+                              onChanged: (value) {
+                                _updateFieldAttempt(resultKey, index, value);
+                              },
+                            ),
                           ),
                         ),
                       ],
@@ -1367,28 +1306,13 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           
           // 最佳成績顯示
           if (_getBestFieldResult(resultKey) != '--') ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.green[100],
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.green[300]!),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.emoji_events, size: 16, color: Colors.green[700]),
-                  const SizedBox(width: 6),
-                  Text(
-                    '最佳: ${_getBestFieldResult(resultKey)}m',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[800],
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 4),
+            Text(
+              '最佳: ${_getBestFieldResult(resultKey)}m',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.green[800],
               ),
             ),
           ],
@@ -1433,7 +1357,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       ),
       child: Text(
         displayText,
-        style: TextStyle(
+                                  style: TextStyle(
           color: textColor,
           fontWeight: FontWeight.w500,
         ),
@@ -1479,7 +1403,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       ),
       child: Text(
         statusText,
-        style: TextStyle(
+                                    style: TextStyle(
           fontSize: 12,
                                     fontWeight: FontWeight.bold,
           color: textColor,
