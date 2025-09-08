@@ -641,7 +641,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 簡潔的次數選擇下拉選單（移除"嘗試次數："標題）
+          // 田賽次數選擇下拉選單
           Row(
             children: [
               SizedBox(
