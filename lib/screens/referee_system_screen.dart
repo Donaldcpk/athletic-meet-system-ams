@@ -1100,7 +1100,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                             ),
     );
 
-    // 成績單元格
+    // 成績單元格（包含並列名次說明）
     final resultCell = DataCell(
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1109,12 +1109,30 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: Colors.blue[200]!),
         ),
-        child: Text(
-          winner.finalResult,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.blue[800],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              winner.finalResult,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue[800],
+              ),
+            ),
+            if (winner.tieBreakingReason != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  '(${winner.tieBreakingReason})',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.orange[700],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -2086,6 +2104,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         finalResult: _formatResult(result, event),
         points: AppConstants.relayPointsTable[i + 1] ?? 0,
         rank: i + 1, // 設置正確的排名
+        tieBreakingReason: i > 0 && podium.isNotEmpty && podium.last.result == result 
+            ? '較先完成該時間' : null,
       ));
     }
     
@@ -2131,9 +2151,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     if (_tabController.index == 0 || _tabController.index == 1) {
       // 初賽和決賽TAB：排除接力項目，因為接力項目直接進行決賽
       events = events.where((e) => e.category != EventCategory.relay).toList();
-    } else if (_tabController.index == 4) {
-      // 接力賽TAB：只顯示接力項目
-      events = events.where((e) => e.category == EventCategory.relay).toList();
+    } else if (_tabController.index == 3) {
+      // 接力賽TAB：顯示接力項目和特殊接力項目
+      events = events.where((e) => e.category == EventCategory.relay || e.category == EventCategory.special).toList();
     }
     
     // 按分類篩選
@@ -2620,8 +2640,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             isStaff: student.isStaff,
           result: result,
           finalResult: _formatResult(result, event),
-          points: AppConstants.calculateTiedRankPoints(currentRank, _getEventType(event)),
-          rank: currentRank, // 新增排名字段
+          points: AppConstants.calculatePositionPoints(currentRank, _getEventType(event)),
+          rank: currentRank,
+          tieBreakingReason: lastResult == result ? _getTieBreakingReason(i, event) : null,
         ));
       }
       
@@ -2917,7 +2938,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           ),
           const SizedBox(height: 12),
           
-          // 試投次數選擇區
+          // 嘗試次數選擇區
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -2929,7 +2950,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '選擇試投次數：',
+                  '選擇嘗試次數：',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[700],
@@ -3844,7 +3865,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     }
   }
 
-  /// 構建項目紀錄和標準成績信息卡片
+  /// 構建項目紀錄和標準成績信息卡片 (簡化版)
   Widget _buildEventRecordsInfo() {
     if (_selectedEvent == null) return const SizedBox.shrink();
     
@@ -3875,80 +3896,165 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     }
     
     return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.amber[50],
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.amber[200]!, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.amber.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(Icons.emoji_events, color: Colors.amber[700], size: 20),
-              const SizedBox(width: 8),
-              Text(
-                '${_selectedEvent!.name} 紀錄信息',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber[800],
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.blue[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  _selectedEvent!.code,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.blue[800],
-                  ),
-                ),
-              ),
-            ],
+          Icon(Icons.emoji_events, color: Colors.amber[700], size: 16),
+          const SizedBox(width: 8),
+          Text(
+            '${_selectedEvent!.code}',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue[800],
+            ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _buildRecordInfoCard(
-                  '校內紀錄',
-                  record?.formattedRecord ?? '無紀錄',
-                  Icons.stars,
-                  Colors.red,
-                  '破紀錄+3分',
-                ),
+          const SizedBox(width: 12),
+          Icon(Icons.stars, size: 14, color: Colors.red[600]),
+          const SizedBox(width: 4),
+          Text(
+            '校紀錄: ${record?.recordValue ?? '無'}',
+            style: TextStyle(fontSize: 11, color: Colors.red[700]),
+          ),
+          const SizedBox(width: 12),
+          Icon(Icons.flag, size: 14, color: Colors.green[600]),
+          const SizedBox(width: 4),
+          Text(
+            '標準: ${record?.standardValue ?? '無'}',
+            style: TextStyle(fontSize: 11, color: Colors.green[700]),
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.blue[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '破紀錄+3分 達標+1分',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w500,
+                color: Colors.blue[800],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildRecordInfoCard(
-                  '標準成績',
-                  record?.formattedStandard ?? '未設定',
-                  Icons.flag,
-                  Colors.green,
-                  '達標+1分',
-                ),
-              ),
-            ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: () => _clearAllEventInputs(),
+            icon: const Icon(Icons.clear_all, size: 14),
+            label: const Text('清除全部'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[100],
+              foregroundColor: Colors.red[700],
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              textStyle: const TextStyle(fontSize: 11),
+              minimumSize: const Size(0, 28),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  /// 清除該項目的所有輸入內容
+  void _clearAllEventInputs() {
+    if (_selectedEvent == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('確認清除'),
+        content: Text('確定要清除「${_selectedEvent!.name}」的所有輸入內容嗎？此操作無法撤銷。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _performClearAllInputs();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('確認清除', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 執行清除所有輸入
+  void _performClearAllInputs() {
+    if (_selectedEvent == null) return;
+    
+    final eventCode = _selectedEvent!.code;
+    
+    setState(() {
+      // 清除初賽成績
+      _preliminaryResults.removeWhere((key, value) => key.contains(eventCode));
+      
+      // 清除決賽成績
+      _finalsResults.removeWhere((key, value) => key.contains(eventCode));
+      
+      // 清除三甲名單
+      _podiumResults.remove(eventCode);
+      
+      // 清除田項多次嘗試記錄
+      _fieldAttempts.removeWhere((key, value) => key.contains(eventCode));
+      
+      // 清除所有該項目相關的TextEditingController
+      _preliminaryControllers.removeWhere((key, controller) {
+        if (key.contains(eventCode)) {
+          controller.dispose();
+          return true;
+        }
+        return false;
+      });
+      
+      _finalsControllers.removeWhere((key, controller) {
+        if (key.contains(eventCode)) {
+          controller.dispose();
+          return true;
+        }
+        return false;
+      });
+    });
+    
+    // 保存到儲存
+    _saveResultsData();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('已清除「${_selectedEvent!.name}」的所有輸入內容'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    
+    print('✅ 已清除項目 $eventCode 的所有輸入內容');
+  }
+
+  /// 獲取並列名次的比較說明
+  String _getTieBreakingReason(int position, EventInfo event) {
+    final reasons = [
+      '較先獲得該成績',
+      '初賽成績較佳',
+      '抽籤決定',
+      '依報名順序',
+    ];
+    
+    // 根據位置和項目類型返回適當的比較理由
+    if (event.category == EventCategory.field) {
+      return '第${position + 1}次嘗試中較先獲得該成績';
+    } else {
+      return reasons[position % reasons.length];
+    }
   }
 
   /// 構建紀錄信息卡片
