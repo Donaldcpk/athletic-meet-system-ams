@@ -327,105 +327,63 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
-  /// 🏃‍♂️ 特殊接力項目 - 暫代人員T1-T8系統
+  /// 特殊接力項目 - 暫代人員T1-T8
   Widget _buildSpecialRelayTable(EventInfo event) {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.purple[400]!, width: 3),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.purple[100]!,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.orange[300]!),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
         children: [
-          // 🎭 特殊接力標題區域
+          // 簡潔標題
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.purple[200],
+              color: Colors.orange[100],
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+                topLeft: Radius.circular(6),
+                topRight: Radius.circular(6),
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.groups, color: Colors.purple[800], size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '🎭 ${event.name} - 使用暫代人員',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.purple[900],
-                    ),
-                  ),
+                Text(
+                  '${event.name} - 暫代人員',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
+                const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.red[600],
-                    borderRadius: BorderRadius.circular(15),
+                    color: Colors.red[100],
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    '⚠️ 無積分計算',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Text(
+                    '無積分計算',
+                    style: TextStyle(fontSize: 12, color: Colors.red[700]),
                   ),
                 ),
               ],
             ),
           ),
           
-          // 🧑‍🤝‍🧑 暫代人員T1-T8成績輸入表格
+          // 暫代人員T1-T8成績輸入表格 - 簡化版
           DataTable(
-            columnSpacing: 25,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
+            columnSpacing: 20,
             columns: const [
-              DataColumn(label: Text('🏃 暫代人員', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-              DataColumn(label: Text('📊 成績', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-              DataColumn(label: Text('🏷️ 狀態', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+              DataColumn(label: Text('暫代人員')),
+              DataColumn(label: Text('成績')),
+              DataColumn(label: Text('狀態')),
             ],
             rows: List.generate(8, (index) {
               final tempId = 'T${index + 1}';
               final teamKey = '${tempId}_${event.code}';
               
               return DataRow(
-                color: MaterialStateProperty.resolveWith<Color?>((Set<MaterialState> states) {
-                  return index % 2 == 0 ? Colors.purple[25] : Colors.white;
-                }),
                 cells: [
-                  DataCell(
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.purple[100],
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.purple[300]!),
-                      ),
-                      child: Text(
-                        '👤 $tempId',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purple[800],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
+                  DataCell(Text(tempId)),
                   DataCell(
                     SizedBox(
                       width: 100,
@@ -646,38 +604,34 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
-  /// 🎯 田賽成績輸入 - 全新優化界面
+  /// 田賽成績輸入 - 簡潔版
   Widget _buildFieldAttemptsWidget(String resultKey, EventInfo event) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.green[300]!, width: 2),
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.green[50],
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(4),
+        color: Colors.grey[50],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔽 新版本：簡潔的下拉選單 (無標題)
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.green[300]!),
-            ),
+          // 次數選擇 - 緊湊版
+          SizedBox(
+            width: 80,
+            height: 32,
             child: DropdownButtonFormField<int>(
               value: _getActiveAttemptCount(resultKey),
               decoration: const InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 isDense: true,
               ),
-              hint: const Text('選擇次數'),
+              style: const TextStyle(fontSize: 11),
               items: List.generate(6, (index) {
                 final count = index + 1;
                 return DropdownMenuItem<int>(
                   value: count,
-                  child: Text('$count 次嘗試', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('$count次'),
                 );
               }),
               onChanged: UserService.hasPermission(UserPermissions.inputScores)
@@ -685,56 +639,45 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   : null,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
           
-          // 🎯 只顯示選中次數的成績輸入欄位 
-          Row(
+          // 成績輸入 - 橫向緊湊排列
+          Wrap(
+            spacing: 4,
             children: List.generate(_getActiveAttemptCount(resultKey), (index) {
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Column(
-                    children: [
-                      Text(
-                        '第${index + 1}次',
-                        style: TextStyle(fontSize: 12, color: Colors.green[700], fontWeight: FontWeight.bold),
+              return SizedBox(
+                width: 50,
+                height: 32,
+                child: UserService.hasPermission(UserPermissions.inputScores)
+                    ? TextFormField(
+                        controller: _getFieldAttemptController(resultKey, index),
+                        decoration: InputDecoration(
+                          hintText: '${index + 1}',
+                          suffixText: 'm',
+                          border: const OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          isDense: true,
+                        ),
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 10),
+                        onChanged: (value) {
+                          _updateFieldAttempt(resultKey, index, value);
+                        },
+                      )
+                    : Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                        child: Text(
+                          _getFieldAttemptValue(resultKey, index),
+                          style: const TextStyle(fontSize: 10),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      UserService.hasPermission(UserPermissions.inputScores)
-                          ? TextFormField(
-                              controller: _getFieldAttemptController(resultKey, index),
-                              decoration: InputDecoration(
-                                hintText: '0.00',
-                                suffixText: 'm',
-                                border: const OutlineInputBorder(),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                                isDense: true,
-                                filled: true,
-                                fillColor: Colors.white,
-                              ),
-                              keyboardType: TextInputType.number,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                              onChanged: (value) {
-                                _updateFieldAttempt(resultKey, index, value);
-                              },
-                            )
-                          : Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                border: Border.all(color: Colors.grey[300]!),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                _getFieldAttemptValue(resultKey, index),
-                                style: const TextStyle(fontSize: 12, color: Colors.black87),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                    ],
-                  ),
-                ),
               );
             }),
           ),
