@@ -61,27 +61,34 @@ class ExcelHelper {
       final dataLines = lines.skip(1).toList();
       
       // 批量處理，避免UI阻塞
+      int currentLineNumber = 2; // 從第2行開始（跳過標題行）
+      
       for (int i = 0; i < dataLines.length; i += 50) {
         final batch = dataLines.skip(i).take(50);
         
         for (final line in batch) {
           final trimmedLine = line.trim();
-          if (trimmedLine.isEmpty) continue;
+          if (trimmedLine.isEmpty) {
+            currentLineNumber++;
+            continue;
+          }
 
           try {
-            final student = _parseStudentLine(trimmedLine, i + 1);
+            final student = _parseStudentLine(trimmedLine, currentLineNumber);
             if (student != null) {
               // 檢查重複
               if (result.validStudents.any((s) => s.studentCode == student.studentCode)) {
                 result.duplicates++;
-                result.errors.add('第${i + 1}行: 學生編號${student.studentCode}重複');
+                result.errors.add('第${currentLineNumber}行: 學生編號${student.studentCode}重複');
               } else {
                 result.validStudents.add(student);
               }
             }
           } catch (e) {
-            result.errors.add('第${i + 1}行: $e');
+            result.errors.add('第${currentLineNumber}行: $e');
           }
+          
+          currentLineNumber++;
         }
         
         // 允許UI更新
