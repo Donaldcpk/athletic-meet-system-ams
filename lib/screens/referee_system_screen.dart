@@ -1174,42 +1174,42 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
-  /// 田賽成績輸入 - 簡潔版本，移除重複的狀態按鈕
+  /// 田賽成績輸入 - 修復重疊問題
   Widget _buildFieldAttemptsWidget(String resultKey, EventInfo event) {
     final activeCount = _getActiveAttemptCount(resultKey);
     
     return Container(
-      width: 400, // 固定寬度
-      padding: const EdgeInsets.all(8),
+      width: 350, // 調整寬度
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(4),
         color: Colors.grey[50],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 嘗試次數選擇
+          // 嘗試次數選擇 - 放在側邊避免重疊
           Row(
             children: [
-              const Text('嘗試次數:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 8),
+              const Text('次數:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 4),
               Container(
-                width: 100,
-                height: 30,
+                width: 65,
+                height: 24,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border.all(color: Colors.grey[400]!),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(3),
                 ),
                 child: DropdownButtonFormField<int>(
                   value: activeCount,
                   decoration: const InputDecoration(
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     isDense: true,
                   ),
-                  style: const TextStyle(fontSize: 11),
+                  style: const TextStyle(fontSize: 10),
                   items: List.generate(6, (index) {
                     final count = index + 1;
                     return DropdownMenuItem<int>(
@@ -1220,14 +1220,25 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   onChanged: (value) => _setActiveAttemptCount(resultKey, value ?? 3),
                 ),
               ),
+              const Spacer(),
+              // 最佳成績顯示在右側
+              if (_getBestFieldResult(resultKey) != '--')
+                Text(
+                  '最佳: ${_getBestFieldResult(resultKey)}m',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[700],
+                  ),
+                ),
             ],
           ),
           
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           
-          // 成績輸入區域
-          SizedBox(
-            height: 60,
+          // 成績輸入區域 - 確保不重疊
+          Container(
+            height: 55,
             child: Row(
               children: List.generate(activeCount, (index) {
                 final attempts = _fieldAttempts[resultKey] ?? [];
@@ -1237,32 +1248,32 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                 
                 return Expanded(
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: isBest ? Colors.green[600]! : Colors.grey[300]!,
                         width: isBest ? 2 : 1,
                       ),
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(3),
                       color: isBest ? Colors.green[50] : Colors.white,
                     ),
                     child: Column(
                       children: [
                         // 標題
                         Container(
-                          height: 20,
+                          height: 18,
                           decoration: BoxDecoration(
                             color: isBest ? Colors.green[100] : Colors.grey[100],
                             borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(4),
-                              topRight: Radius.circular(4),
+                              topLeft: Radius.circular(3),
+                              topRight: Radius.circular(3),
                             ),
                           ),
                           child: Center(
                             child: Text(
                               '第${index + 1}次',
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: 8,
                                 fontWeight: FontWeight.bold,
                                 color: isBest ? Colors.green[800] : Colors.grey[700],
                               ),
@@ -1273,20 +1284,22 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                         // 輸入框
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.all(2),
+                            padding: const EdgeInsets.all(1),
                             child: TextFormField(
                               controller: _getFieldAttemptController(resultKey, index),
                               decoration: const InputDecoration(
                                 hintText: '0.00',
+                                hintStyle: TextStyle(fontSize: 8, color: Colors.grey),
                                 suffixText: 'm',
+                                suffixStyle: TextStyle(fontSize: 8, color: Colors.grey),
                                 border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                                contentPadding: EdgeInsets.all(1),
                                 isDense: true,
                               ),
                               keyboardType: TextInputType.number,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 9,
                                 fontWeight: isBest ? FontWeight.bold : FontWeight.normal,
                                 color: isBest ? Colors.green[800] : Colors.black,
                               ),
@@ -1303,19 +1316,6 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
               }),
             ),
           ),
-          
-          // 最佳成績顯示
-          if (_getBestFieldResult(resultKey) != '--') ...[
-            const SizedBox(height: 4),
-            Text(
-              '最佳: ${_getBestFieldResult(resultKey)}m',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.green[800],
-              ),
-            ),
-          ],
         ],
       ),
     );
