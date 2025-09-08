@@ -1047,6 +1047,11 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   /// 田賽支持方法
   int _getActiveAttemptCount(String resultKey) {
     final attempts = _fieldAttempts[resultKey] ?? [];
+    if (attempts.isEmpty) {
+      // 初始化為3次嘗試
+      _fieldAttempts[resultKey] = ['', '', ''];
+      return 3;
+    }
     return attempts.length.clamp(1, 6);
   }
 
