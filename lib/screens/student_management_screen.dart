@@ -82,7 +82,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
     return Scaffold(
       appBar: ExtendedAppBar(
         title: '學生管理',
-        subtitle: '已登記 ${_appState.students.length} 位學生',
+        subtitle: '已登記 ${_appState.students.length} 位學生 | 🔑 ${UserService.getDisplayName()}',
         onRefresh: () => setState(() {}),
         actions: [
           if (_appState.hasSampleData) ...[
@@ -92,8 +92,8 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
               tooltip: '清除樣本數據',
             ),
           ],
-          // 🗑️ 清除所有學生功能 - 只有管理員可見
-          if (UserService.hasPermission(UserPermissions.clearData) && _appState.students.isNotEmpty) ...[
+          // 🗑️ 清除所有學生功能 - 只有管理員可見 (測試模式：始終顯示)
+          if (UserService.hasPermission(UserPermissions.clearData)) ...[
             Container(
               decoration: BoxDecoration(
                 color: Colors.red[100],

@@ -81,6 +81,12 @@ class _AppInitializerState extends State<AppInitializer> {
       // 恢復用戶會話
       UserService.restoreSession();
       
+      // 🚀 如果沒有登入用戶，自動以管理員身份登入
+      if (!UserService.isLoggedIn) {
+        await UserService.login('系統管理員', UserRole.admin);
+        print('🔑 自動管理員登入成功');
+      }
+      
       setState(() {
         _initializationStatus = '正在加載數據...';
       });
