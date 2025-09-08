@@ -522,6 +522,7 @@ class PodiumWinner {
   final String studentId;
   final String studentName;
   final String studentCode;
+  final String? className;      // 班別（個人項目）或隊伍信息（接力項目）
   final bool isStaff;
   final double result;
   final String finalResult;
@@ -534,6 +535,7 @@ class PodiumWinner {
     required this.studentId,
     required this.studentName,
     required this.studentCode,
+    this.className,
     required this.isStaff,
     required this.result,
     required this.finalResult,
@@ -549,6 +551,7 @@ class PodiumWinner {
       'studentId': studentId,
       'studentName': studentName,
       'studentCode': studentCode,
+      'className': className,
       'isStaff': isStaff,
       'result': result,
       'finalResult': finalResult,
@@ -565,6 +568,7 @@ class PodiumWinner {
       studentId: json['studentId'],
       studentName: json['studentName'],
       studentCode: json['studentCode'],
+      className: json['className'],
       isStaff: json['isStaff'] ?? false,
       result: (json['result'] ?? 0.0).toDouble(),
       finalResult: json['finalResult'] ?? '',

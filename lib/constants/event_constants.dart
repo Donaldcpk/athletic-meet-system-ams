@@ -65,6 +65,7 @@ class EventConstants {
   /// 丙組女子項目 (低年級：中1-2) - G=Girl
   static const List<EventInfo> primaryFemaleEvents_G = [
     // 徑賽
+    EventInfo(code: 'GC60', name: '60m', category: EventCategory.track, divisions: [Division.primary], genders: [Gender.female]),
     EventInfo(code: 'GC100', name: '100m', category: EventCategory.track, divisions: [Division.primary], genders: [Gender.female]),
     EventInfo(code: 'GC200', name: '200m', category: EventCategory.track, divisions: [Division.primary], genders: [Gender.female]),
     EventInfo(code: 'GC400', name: '400m', category: EventCategory.track, divisions: [Division.primary], genders: [Gender.female]),
@@ -114,6 +115,7 @@ class EventConstants {
   /// 丙組男子項目 - B=Boy
   static const List<EventInfo> primaryMaleEvents_B = [
     // 徑賽
+    EventInfo(code: 'BC60', name: '60m', category: EventCategory.track, divisions: [Division.primary], genders: [Gender.male]),
     EventInfo(code: 'BC100', name: '100m', category: EventCategory.track, divisions: [Division.primary], genders: [Gender.male]),
     EventInfo(code: 'BC200', name: '200m', category: EventCategory.track, divisions: [Division.primary], genders: [Gender.male]),
     EventInfo(code: 'BC400', name: '400m', category: EventCategory.track, divisions: [Division.primary], genders: [Gender.male]),
