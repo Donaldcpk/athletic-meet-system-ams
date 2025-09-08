@@ -23,6 +23,7 @@ class EventInfo {
   final List<Gender> genders;
   final bool isScoring;     // 是否計分
   final bool isClassRelay;  // 是否班際接力
+  final bool hasFinals;     // 是否有決賽
   final int? maxParticipants; // 每班最大參與人數
   final String? specialRules; // 特殊規則
 
@@ -34,6 +35,7 @@ class EventInfo {
     required this.genders,
     this.isScoring = true,
     this.isClassRelay = false,
+    this.hasFinals = true,
     this.maxParticipants,
     this.specialRules,
   });
@@ -210,7 +212,8 @@ class EventConstants {
       category: EventCategory.track, 
       divisions: Division.values, 
       genders: [Gender.mixed],
-      specialRules: '公開1500米',
+      hasFinals: false, // 只有參與分，無決賽
+      specialRules: '公開1500米，只有參與獎，無決賽和排名獎',
     ),
   ];
 

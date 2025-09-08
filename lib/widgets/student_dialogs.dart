@@ -520,51 +520,177 @@ class _FileImportDialogState extends State<FileImportDialog> {
   }
 
   Widget _buildValidationResults() {
-    final validStudents = _getValidStudents();
-    final errorResults = _importResults!.errors;
-
+    final result = _importResults!;
+    
     return Container(
-      height: 100,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(4),
+        color: result.hasErrors ? Colors.red[50] : Colors.green[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: result.hasErrors ? Colors.red[200]! : Colors.green[200]!,
+        ),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                result.hasErrors ? Icons.error : Icons.check_circle,
+                color: result.hasErrors ? Colors.red[700] : Colors.green[700],
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                result.hasErrors ? '驗證失敗' : '驗證成功',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: result.hasErrors ? Colors.red[700] : Colors.green[700],
+                ),
+              ),
+              const Spacer(),
+              if (result.hasErrors)
+                OutlinedButton.icon(
+                  onPressed: _downloadErrorReport,
+                  icon: const Icon(Icons.download, size: 16),
+                  label: const Text('下載錯誤報告'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red[700],
+                    side: BorderSide(color: Colors.red[300]!),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          
+          // 統計信息
+          Wrap(
+            spacing: 16,
+            children: [
+              _buildStatItem('有效學生', result.validStudents.length, Colors.green),
+              if (result.duplicates > 0)
+                _buildStatItem('重複數據', result.duplicates, Colors.orange),
+              if (result.errors.isNotEmpty)
+                _buildStatItem('錯誤數', result.errors.length, Colors.red),
+            ],
+          ),
+          
+          // 錯誤詳情
+          if (result.errors.isNotEmpty) ...[
+            const SizedBox(height: 12),
             Text(
-              '驗證結果：',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              '錯誤詳情：',
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
+                color: Colors.red[700],
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              '✅ 有效學生：${validStudents.length} 位',
-              style: const TextStyle(color: Colors.green),
-            ),
-            if (errorResults.isNotEmpty) ...[
-              Text(
-                '❌ 錯誤記錄：${errorResults.length} 筆',
-                style: const TextStyle(color: Colors.red),
+            Container(
+              height: 100,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.red[200]!),
               ),
-              const SizedBox(height: 4),
-              ...errorResults.take(3).map((error) => Text(
-                error,
-                style: const TextStyle(fontSize: 12, color: Colors.red),
-              )),
-              if (errorResults.length > 3)
-                Text(
-                  '... 還有 ${errorResults.length - 3} 個錯誤',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-            ],
+              child: ListView.builder(
+                itemCount: result.errors.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text(
+                      '${index + 1}. ${result.errors[index]}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red[600],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
+  }
+
+  Widget _buildStatItem(String label, int count, MaterialColor color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: color[700]),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            count.toString(),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color[800],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _downloadErrorReport() {
+    final result = _importResults!;
+    final buffer = StringBuffer();
+    
+    buffer.writeln('CSV匯入錯誤報告');
+    buffer.writeln('生成時間：${DateTime.now().toString()}');
+    buffer.writeln('');
+    buffer.writeln('統計信息：');
+    buffer.writeln('- 有效學生：${result.validStudents.length}');
+    buffer.writeln('- 重複數據：${result.duplicates}');
+    buffer.writeln('- 錯誤數量：${result.errors.length}');
+    buffer.writeln('');
+    
+    if (result.errors.isNotEmpty) {
+      buffer.writeln('詳細錯誤：');
+      for (int i = 0; i < result.errors.length; i++) {
+        buffer.writeln('${i + 1}. ${result.errors[i]}');
+      }
+      buffer.writeln('');
+    }
+    
+    buffer.writeln('建議解決方案：');
+    buffer.writeln('1. 檢查CSV格式是否正確（需要7個欄位：姓名,班級,學號,性別,出生年份,工作人員,報名項目編碼）');
+    buffer.writeln('2. 確保學號為數字格式');
+    buffer.writeln('3. 性別只能填寫：男/女 或 M/F');
+    buffer.writeln('4. 出生年份應在2000-2020之間');
+    buffer.writeln('5. 工作人員狀態填寫：是/否 或 Y/N');
+    buffer.writeln('6. 項目代碼請參考模板或聯繫管理員');
+    
+    _downloadTextFile(buffer.toString(), 'csv_import_error_report.txt');
+  }
+
+  void _downloadTextFile(String content, String filename) {
+    final bytes = content.codeUnits;
+    final blob = html.Blob([bytes], 'text/plain;charset=utf-8');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', filename)
+      ..style.display = 'none';
+    
+    html.document.body?.children.add(anchor);
+    anchor.click();
+    html.document.body?.children.remove(anchor);
+    html.Url.revokeObjectUrl(url);
   }
 
   List<Student> _getValidStudents() {

@@ -8,6 +8,7 @@ import '../utils/excel_helper.dart';
 import '../utils/app_state.dart';
 import '../widgets/student_dialogs.dart';
 import '../widgets/common_app_bar.dart';
+import '../services/user_service.dart';
 import 'registration_management_screen.dart';
 
 /// 學生管理頁面
@@ -91,21 +92,30 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
               tooltip: '清除樣本數據',
             ),
           ],
+          // 清除所有學生功能 - 只有管理員可見
+          if (UserService.hasPermission(UserPermissions.clearData) && _appState.students.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear_all, color: Colors.red),
+              onPressed: _clearAllStudents,
+              tooltip: '清除所有學生',
+            ),
           IconButton(
             icon: const Icon(Icons.file_download),
             onPressed: _downloadTemplate,
             tooltip: '下載CSV模板',
           ),
-          IconButton(
-            icon: const Icon(Icons.file_upload),
-            onPressed: _importStudents,
-            tooltip: '匯入學生',
-          ),
-          IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: _exportStudents,
-            tooltip: '匯出學生名單',
-          ),
+          if (UserService.hasPermission(UserPermissions.importData))
+            IconButton(
+              icon: const Icon(Icons.file_upload),
+              onPressed: _importStudents,
+              tooltip: '匯入學生',
+            ),
+          if (UserService.hasPermission(UserPermissions.exportData))
+            IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: _exportStudents,
+              tooltip: '匯出學生名單',
+            ),
         ],
       ),
       body: ResponsiveHelper.isMobile(context)
@@ -661,6 +671,87 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
             child: const Text('清除'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _clearAllStudents() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('⚠️ 危險操作'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('確定要清除所有學生數據嗎？'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '此操作將會：',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red[700],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text('• 刪除所有 ${_appState.students.length} 位學生', style: TextStyle(color: Colors.red[600])),
+                  Text('• 清除所有報名資料', style: TextStyle(color: Colors.red[600])),
+                  Text('• 清除所有成績記錄', style: TextStyle(color: Colors.red[600])),
+                  const SizedBox(height: 8),
+                  Text(
+                    '⚠️ 此操作無法復原！',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red[800],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              _performClearAllStudents();
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('確認清除'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _performClearAllStudents() {
+    final studentCount = _appState.students.length;
+    
+    // 清除所有學生數據
+    _appState.clearAllStudents();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ 已清除所有學生數據（$studentCount 位學生）'),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
