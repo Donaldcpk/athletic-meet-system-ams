@@ -506,7 +506,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
               DataCell(Text(student.classId)),
               DataCell(Text(preliminaryResult)),
               DataCell(
-                UserService.hasPermission(UserPermissions.inputScores)
+                // 🚨 緊急修復：暫時強制開啟決賽成績輸入功能
+                true // UserService.hasPermission(UserPermissions.inputScores)
                     ? _buildResultTextField(
                         resultKey: resultKey,
                         isInitial: false,
@@ -515,7 +516,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     : _buildReadOnlyResultDisplay(resultKey, event),
               ),
               DataCell(
-                UserService.hasPermission(UserPermissions.inputScores)
+                // 🚨 緊急修復：暫時強制開啟決賽狀態控制功能
+                true // UserService.hasPermission(UserPermissions.inputScores)
                     ? Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -957,7 +959,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   DataCell(
                     SizedBox(
                       width: 100,
-                      child: UserService.hasPermission(UserPermissions.inputScores)
+                      child: // 🚨 緊急修復：暫時強制開啟接力成績輸入功能
+                          true // UserService.hasPermission(UserPermissions.inputScores)
                           ? TextField(
                               controller: _getOrCreateRelayController(teamKey),
                               decoration: const InputDecoration(
@@ -973,7 +976,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     ),
                   ),
                   DataCell(
-                    UserService.hasPermission(UserPermissions.inputScores)
+                    // 🚨 緊急修復：暫時強制開啟接力狀態控制功能
+                    true // UserService.hasPermission(UserPermissions.inputScores)
                         ? Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -989,8 +993,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             }),
           ),
           
-          // 儲存按鈕 - 根據權限顯示
-          if (UserService.hasPermission(UserPermissions.inputScores))
+          // 儲存按鈕 - 🚨 緊急修復：暫時強制顯示
+          // if (UserService.hasPermission(UserPermissions.inputScores))
             Padding(
               padding: const EdgeInsets.all(16),
               child: ElevatedButton.icon(
@@ -1105,7 +1109,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     DataCell(Text(student.name)),
                     DataCell(Text(student.classId)),
                     DataCell(
-                      UserService.hasPermission(UserPermissions.inputScores)
+                      // 🚨 緊急修復：暫時強制開啟成績輸入功能
+                      true // UserService.hasPermission(UserPermissions.inputScores)
                           ? (event.category == EventCategory.field
                               ? _buildFieldAttemptsWidget(resultKey, event)
                               : _buildResultTextField(
@@ -1116,7 +1121,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                           : _buildReadOnlyResultDisplay(resultKey, event),
                     ),
                     DataCell(
-                      UserService.hasPermission(UserPermissions.inputScores)
+                      // 🚨 緊急修復：暫時強制開啟狀態控制功能
+                      true // UserService.hasPermission(UserPermissions.inputScores)
                           ? Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -1130,7 +1136,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                           : _buildReadOnlyStatusDisplay(resultKey),
                     ),
                     DataCell(
-                      UserService.hasPermission(UserPermissions.inputScores)
+                      // 🚨 緊急修復：暫時強制開啟清除功能
+                      true // UserService.hasPermission(UserPermissions.inputScores)
                           ? ElevatedButton(
                               onPressed: () => _clearResult(resultKey),
                               style: ElevatedButton.styleFrom(
