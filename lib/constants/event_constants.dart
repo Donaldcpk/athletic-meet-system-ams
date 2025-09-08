@@ -171,34 +171,34 @@ class EventConstants {
     ),
   ];
 
-  /// 特殊接力項目 (10人接力、家長接力、師生接力)
+  /// 特殊接力項目 (師生家長接力、校隊接力、臨時特殊接力)
   static const List<EventInfo> specialRelayEvents = [
     EventInfo(
-      code: '10R', 
-      name: '10人接力', 
-      category: EventCategory.special, 
-      divisions: [Division.senior, Division.junior, Division.primary], 
-      genders: [Gender.mixed],
-      maxParticipants: 10,
-      specialRules: '10人接力，每班最多一隊，每年級分別排名',
-    ),
-    EventInfo(
-      code: 'PARENT_R', 
-      name: '家長接力', 
+      code: 'TEACHER_PARENT_R', 
+      name: '師生家長接力', 
       category: EventCategory.special, 
       divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
       maxParticipants: 4,
-      specialRules: '家長接力，每班最多一隊家長，每年級分別排名',
+      specialRules: '師生家長接力，每班最多一隊，不分年級統一排名',
     ),
     EventInfo(
-      code: 'TEACHER_R', 
-      name: '師生接力', 
+      code: 'SCHOOL_TEAM_R', 
+      name: '校隊接力', 
       category: EventCategory.special, 
       divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
       maxParticipants: 4,
-      specialRules: '師生接力，老師+學生混合，每年級分別排名',
+      specialRules: '校隊代表隊參與，不分年級統一排名',
+    ),
+    EventInfo(
+      code: 'SPECIAL_R', 
+      name: '臨時特殊接力', 
+      category: EventCategory.special, 
+      divisions: [Division.senior, Division.junior, Division.primary], 
+      genders: [Gender.mixed],
+      maxParticipants: 4,
+      specialRules: '臨時安排的特殊接力項目，不分年級統一排名',
     ),
   ];
 

@@ -15,6 +15,7 @@ import '../widgets/common_app_bar.dart';
 import '../services/operation_log_service.dart';
 import '../services/scoring_service.dart';
 import '../services/lane_allocation_service.dart';
+import '../services/records_service.dart';
 
 /// 裁判系統主界面
 class RefereeSystemScreen extends StatefulWidget {
@@ -80,6 +81,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         _searchQuery = _searchController.text;
       });
     });
+    
+    // 初始化紀錄系統
+    RecordsService.initializeRecords();
     
     // 載入已儲存的成績數據
     _loadResultsData();
@@ -385,7 +389,12 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         // 右側成績輸入區域
         Expanded(
           child: _selectedEvent != null
-              ? _buildPreliminaryTable(_selectedEvent!)
+              ? Column(
+                  children: [
+                    _buildEventRecordsInfo(), // 紀錄和標準成績信息
+                    Expanded(child: _buildPreliminaryTable(_selectedEvent!)),
+                  ],
+                )
               : const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -3833,5 +3842,176 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       default:
         return EventModel.EventType.individual;
     }
+  }
+
+  /// 構建項目紀錄和標準成績信息卡片
+  Widget _buildEventRecordsInfo() {
+    if (_selectedEvent == null) return const SizedBox.shrink();
+    
+    // 根據事件類型確定性別和組別
+    final eventCode = _selectedEvent!.code;
+    Gender? gender;
+    Division? division;
+    
+    // 解析性別和組別
+    if (eventCode.startsWith('B')) {
+      gender = Gender.male;
+    } else if (eventCode.startsWith('G')) {
+      gender = Gender.female;
+    }
+    
+    if (eventCode.contains('A')) {
+      division = Division.senior;
+    } else if (eventCode.contains('B')) {
+      division = Division.junior;
+    } else if (eventCode.contains('C')) {
+      division = Division.primary;
+    }
+    
+    // 如果無法解析性別和組別，顯示通用信息
+    EventRecord? record;
+    if (gender != null && division != null) {
+      record = RecordsService.getMatchingRecord(_selectedEvent!.name, gender, division);
+    }
+    
+    return Container(
+      margin: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber[200]!, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.emoji_events, color: Colors.amber[700], size: 20),
+              const SizedBox(width: 8),
+              Text(
+                '${_selectedEvent!.name} 紀錄信息',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber[800],
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blue[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _selectedEvent!.code,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blue[800],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildRecordInfoCard(
+                  '校內紀錄',
+                  record?.formattedRecord ?? '無紀錄',
+                  Icons.stars,
+                  Colors.red,
+                  '破紀錄+3分',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildRecordInfoCard(
+                  '標準成績',
+                  record?.formattedStandard ?? '未設定',
+                  Icons.flag,
+                  Colors.green,
+                  '達標+1分',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 構建紀錄信息卡片
+  Widget _buildRecordInfoCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    String bonus,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              bonus,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

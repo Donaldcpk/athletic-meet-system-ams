@@ -3,10 +3,11 @@
 
 import 'dart:convert';
 import '../models/student.dart';
-import '../models/event.dart';
+import '../models/event.dart' as EventModel;
 import '../constants/event_constants.dart';
 import '../constants/app_constants.dart';
 import 'storage_service.dart';
+import 'records_service.dart';
 import 'realtime_sync_service.dart';
 
 /// 學生成績記錄
@@ -125,10 +126,13 @@ class ScoringService {
     bool isDQ = false,
     bool isABS = false,
     bool isRecordBreaker = false,
+    Gender? gender,          // 新增性別參數
+    Division? division,      // 新增組別參數
+    String? eventName,       // 新增項目名稱參數
   }) async {
     final key = '${studentId}_$eventCode';
     
-    // 計算積分
+    // 計算積分，包含標準成績和破紀錄檢查
     final scores = _calculateScores(
       eventCode: eventCode,
       preliminaryRank: preliminaryRank,
@@ -138,6 +142,10 @@ class ScoringService {
       isDQ: isDQ,
       isABS: isABS,
       isRecordBreaker: isRecordBreaker,
+      gender: gender,
+      division: division,
+      eventName: eventName,
+      finalResult: finalsResult,
     );
     
     final studentScore = StudentScore(
@@ -220,6 +228,10 @@ class ScoringService {
     required bool isDQ,
     required bool isABS,
     required bool isRecordBreaker,
+    Gender? gender,
+    Division? division,
+    String? eventName,
+    String? finalResult,
   }) {
     final event = EventConstants.allEvents.firstWhere(
       (e) => e.code == eventCode,
@@ -239,13 +251,33 @@ class ScoringService {
     // 名次分（只有決賽排名才計分）
     int awardPoints = 0;
     if (finalsRank > 0 && finalsRank <= 8 && !isDNF && !isDQ && !isABS) {
-      awardPoints = AppConstants.calculatePositionPoints(finalsRank, EventType.individual); // 暫時使用individual，需要根據實際event類型調整
+      final eventType = event.category == EventCategory.relay ? EventModel.EventType.relay : EventModel.EventType.individual;
+      awardPoints = AppConstants.calculatePositionPoints(finalsRank, eventType);
     }
     
-    // 破紀錄獎勵分
+    // 破紀錄和標準成績獎勵分
     int recordBonus = 0;
+    
+    // 如果明確標記為破紀錄
     if (isRecordBreaker) {
-      recordBonus = AppConstants.recordBonusPoints;
+      recordBonus += 3; // 破校紀錄+3分
+    } 
+    // 自動檢查破紀錄和標準成績
+    else if (finalResult != null && finalResult.isNotEmpty && 
+             gender != null && division != null && eventName != null) {
+      try {
+        // 檢查是否破校紀錄
+        if (RecordsService.breaksRecord(eventName, gender, division, finalResult)) {
+          recordBonus += 3; // 破校紀錄+3分
+        }
+        // 如果沒破紀錄，檢查是否達標準成績
+        else if (RecordsService.meetsStandard(eventName, gender, division, finalResult)) {
+          recordBonus += 1; // 達標準成績+1分
+        }
+      } catch (e) {
+        // 如果紀錄檢查失敗，使用原有邏輯
+        print('紀錄檢查失敗：$e');
+      }
     }
     
     // 總分
