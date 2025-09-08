@@ -629,75 +629,60 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
-  /// 構建田項多次試跳界面
+  /// 構建田項多次試跳界面 - 簡化版本
   Widget _buildFieldAttemptsWidget(String resultKey, EventInfo event) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.blue[200]!, width: 1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         color: Colors.blue[25],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 簡化的嘗試次數選擇
+          // 簡潔的次數選擇下拉選單（移除"嘗試次數："標題）
           Row(
             children: [
-              Text(
-                '嘗試次數：',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[700],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.grey[400]!),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: _getActiveAttemptCount(resultKey),
-                    hint: const Text('選擇'),
-                    items: List.generate(6, (index) {
-                      final count = index + 1;
-                      return DropdownMenuItem<int>(
-                        value: count,
-                        child: Text('$count 次'),
-                      );
-                    }),
-                    onChanged: UserService.hasPermission(UserPermissions.inputScores)
-                        ? (value) => _setActiveAttemptCount(resultKey, value ?? 1)
-                        : null, // 觀看者無法修改
+              SizedBox(
+                width: 80,
+                child: DropdownButtonFormField<int>(
+                  value: _getActiveAttemptCount(resultKey),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    isDense: true,
                   ),
+                  items: List.generate(6, (index) {
+                    final count = index + 1;
+                    return DropdownMenuItem<int>(
+                      value: count,
+                      child: Text('$count 次'),
+                    );
+                  }),
+                  onChanged: UserService.hasPermission(UserPermissions.inputScores)
+                      ? (value) => _setActiveAttemptCount(resultKey, value ?? 1)
+                      : null,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           
-          // 成績輸入欄位
+          // 成績輸入欄位 - 只顯示選擇的次數，移除"米"單位強調
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: List.generate(6, (index) {
-              final isActive = index < _getActiveAttemptCount(resultKey);
-              if (!isActive) return const SizedBox.shrink();
-              
+            spacing: 6,
+            runSpacing: 6,
+            children: List.generate(_getActiveAttemptCount(resultKey), (index) {
               return Column(
                 children: [
                   Text(
                     '第${index + 1}次',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   SizedBox(
-                    width: 70,
+                    width: 60,
                     child: UserService.hasPermission(UserPermissions.inputScores)
                         ? TextFormField(
                             controller: _getFieldAttemptController(resultKey, index),
@@ -705,25 +690,26 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                               hintText: '0.00',
                               suffixText: 'm',
                               border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                              isDense: true,
                             ),
                             keyboardType: TextInputType.number,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 13),
+                            style: const TextStyle(fontSize: 11),
                             onChanged: (value) {
                               _updateFieldAttempt(resultKey, index, value);
                             },
                           )
                         : Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                             decoration: BoxDecoration(
                               color: Colors.grey[50],
-                              border: const Border.fromBorderSide(BorderSide(color: Colors.grey)),
+                              border: Border.all(color: Colors.grey[300]!),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               _getFieldAttemptValue(resultKey, index),
-                              style: const TextStyle(fontSize: 13, color: Colors.black87),
+                              style: const TextStyle(fontSize: 11, color: Colors.black87),
                               textAlign: TextAlign.center,
                             ),
                           ),
