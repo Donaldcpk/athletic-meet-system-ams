@@ -183,12 +183,9 @@ enum Division {
 
   /// 根據出生年份獲取組別（主要分組方法）
   static Division fromBirthYear(int birthYear) {
-    if (birthYear >= 2007 && birthYear <= 2009) return Division.senior;    // 2007-2009年 → 甲組
+    if (birthYear <= 2009) return Division.senior;                         // 2009年或之前 → 甲組
     if (birthYear >= 2010 && birthYear <= 2011) return Division.junior;    // 2010-2011年 → 乙組
     if (birthYear >= 2012) return Division.primary;                        // 2012年或之後 → 丙組
-    
-    // 對於2007年之前的學生（過年齡），視為甲組
-    if (birthYear < 2007) return Division.senior;
     
     return Division.primary; // 默認為丙組
   }
