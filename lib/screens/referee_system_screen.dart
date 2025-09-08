@@ -52,6 +52,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   final Map<String, List<String>> _finalists = {};
   final Map<String, List<PodiumWinner>> _podiumResults = {};
   final Map<String, List<String>> _fieldAttempts = {};
+  final Map<String, int> _fieldRankings = {}; // 田賽排名存儲
   
   // TextEditingController管理
   final Map<String, TextEditingController> _preliminaryControllers = {};
@@ -545,10 +546,20 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     
     // 調試信息
     print('🔍 所有項目數量: ${EventConstants.allEvents.length}');
+    print('🔍 當前標籤頁索引: ${_tabController.index}');
     print('🔍 過濾後項目數量: ${events.length}');
     print('🔍 接力項目數量: ${relayEvents.length}');
+    
+    // 列出所有接力和特殊項目
+    final allRelaySpecial = EventConstants.allEvents.where((e) => 
+      e.category == EventCategory.relay || e.category == EventCategory.special).toList();
+    print('🔍 EventConstants中的接力/特殊項目數量: ${allRelaySpecial.length}');
+    for (final event in allRelaySpecial) {
+      print('🔍 定義的接力/特殊項目: ${event.code} - ${event.name} (${event.category})');
+    }
+    
     for (final event in relayEvents) {
-      print('🔍 接力項目: ${event.code} - ${event.name} (${event.category})');
+      print('🔍 過濾後的接力項目: ${event.code} - ${event.name} (${event.category})');
     }
     
     return Column(
@@ -1181,151 +1192,139 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
-  /// 田賽成績輸入 - 修復重疊問題
+  /// 田賽成績輸入 - 簡化為單一成績輸入
   Widget _buildFieldAttemptsWidget(String resultKey, EventInfo event) {
-    final activeCount = _getActiveAttemptCount(resultKey);
-    
     return Container(
-      width: 350, // 調整寬度
-      padding: const EdgeInsets.all(6),
+      width: 200, // 簡化後減少寬度
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(6),
         color: Colors.grey[50],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 嘗試次數選擇 - 放在側邊避免重疊
-          Row(
-            children: [
-              const Text('次數:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 4),
-              Container(
-                width: 65,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey[400]!),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: DropdownButtonFormField<int>(
-                  value: activeCount,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    isDense: true,
-                  ),
-                  style: const TextStyle(fontSize: 10),
-                  items: List.generate(6, (index) {
-                    final count = index + 1;
-                    return DropdownMenuItem<int>(
-                      value: count,
-                      child: Text('$count次'),
-                    );
-                  }),
-                  onChanged: (value) => _setActiveAttemptCount(resultKey, value ?? 3),
-                ),
-              ),
-              const Spacer(),
-              // 最佳成績顯示在右側
-              if (_getBestFieldResult(resultKey) != '--')
-                Text(
-                  '最佳: ${_getBestFieldResult(resultKey)}m',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
-                  ),
-                ),
-            ],
-          ),
-          
-          const SizedBox(height: 6),
-          
-          // 成績輸入區域 - 確保不重疊
-          Container(
-            height: 55,
-            child: Row(
-              children: List.generate(activeCount, (index) {
-                final attempts = _fieldAttempts[resultKey] ?? [];
-                final hasValue = index < attempts.length && attempts[index].isNotEmpty;
-                final value = hasValue ? attempts[index] : '';
-                final isBest = hasValue && _getBestFieldResult(resultKey) == value && value != '0' && value != '0.00';
-                
-                return Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 1),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: isBest ? Colors.green[600]! : Colors.grey[300]!,
-                        width: isBest ? 2 : 1,
-                      ),
-                      borderRadius: BorderRadius.circular(3),
-                      color: isBest ? Colors.green[50] : Colors.white,
-                    ),
-                    child: Column(
-                      children: [
-                        // 標題
-                        Container(
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: isBest ? Colors.green[100] : Colors.grey[100],
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(3),
-                              topRight: Radius.circular(3),
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '第${index + 1}次',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: isBest ? Colors.green[800] : Colors.grey[700],
-                              ),
-                            ),
-                          ),
-                        ),
-                        
-                        // 輸入框
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(1),
-                            child: TextFormField(
-                              controller: _getFieldAttemptController(resultKey, index),
-                              decoration: const InputDecoration(
-                                hintText: '0.00',
-                                hintStyle: TextStyle(fontSize: 8, color: Colors.grey),
-                                suffixText: 'm',
-                                suffixStyle: TextStyle(fontSize: 8, color: Colors.grey),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.all(1),
-                                isDense: true,
-                              ),
-                              keyboardType: TextInputType.number,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: isBest ? FontWeight.bold : FontWeight.normal,
-                                color: isBest ? Colors.green[800] : Colors.black,
-                              ),
-                              onChanged: (value) {
-                                _updateFieldAttempt(resultKey, index, value);
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+          // 標題
+          Text(
+            '田賽成績',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
             ),
           ),
+          const SizedBox(height: 8),
+          
+          // 單一成績輸入框
+          TextField(
+            controller: _getOrCreateController(resultKey, true),
+            decoration: InputDecoration(
+              hintText: '請輸入成績',
+              suffixText: 'm',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              isDense: true,
+            ),
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            onChanged: (value) {
+              // 保存成績並自動計算排名
+              _preliminaryResults[resultKey] = value;
+              _calculateFieldRanking(event);
+              setState(() {});
+            },
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // 顯示當前排名
+          _buildFieldRankingDisplay(resultKey, event),
         ],
       ),
     );
+  }
+  
+  /// 計算田賽排名
+  void _calculateFieldRanking(EventInfo event) {
+    final participants = _getSortedParticipants(event);
+    final results = <String, double>{};
+    
+    // 收集所有有效成績
+    for (final student in participants) {
+      final resultKey = '${student.id}_${event.code}';
+      final scoreText = _preliminaryResults[resultKey];
+      if (scoreText != null && scoreText.isNotEmpty) {
+        final score = double.tryParse(scoreText);
+        if (score != null && score > 0) {
+          results[resultKey] = score;
+        }
+      }
+    }
+    
+    // 按成績排序（田賽越大越好）
+    final sortedResults = results.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    
+    // 設置排名
+    _fieldRankings.clear();
+    for (int i = 0; i < sortedResults.length; i++) {
+      _fieldRankings[sortedResults[i].key] = i + 1;
+    }
+  }
+  
+  /// 顯示田賽排名
+  Widget _buildFieldRankingDisplay(String resultKey, EventInfo event) {
+    final rank = _fieldRankings[resultKey];
+    final score = _preliminaryResults[resultKey];
+    
+    if (rank == null || score == null || score.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: rank <= 3 ? _getRankColor(rank) : Colors.grey[100],
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: rank <= 3 ? _getRankBorderColor(rank) : Colors.grey[300]!,
+        ),
+      ),
+      child: Text(
+        '第 $rank 名',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: rank <= 3 ? Colors.white : Colors.grey[700],
+        ),
+      ),
+    );
+  }
+  
+  /// 獲取排名顏色
+  Color _getRankColor(int rank) {
+    switch (rank) {
+      case 1: return Colors.amber[600]!; // 金色
+      case 2: return Colors.grey[400]!; // 銀色
+      case 3: return Colors.brown[400]!; // 銅色
+      default: return Colors.grey[100]!;
+    }
+  }
+  
+  /// 獲取排名邊框顏色
+  Color _getRankBorderColor(int rank) {
+    switch (rank) {
+      case 1: return Colors.amber[700]!;
+      case 2: return Colors.grey[600]!;
+      case 3: return Colors.brown[600]!;
+      default: return Colors.grey[300]!;
+    }
   }
 
   /// 構建只讀成績顯示
