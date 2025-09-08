@@ -1192,61 +1192,53 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     );
   }
 
-  /// 田賽成績輸入 - 簡化為單一成績輸入
+  /// 田賽成績輸入 - 像徑賽一樣簡潔
   Widget _buildFieldAttemptsWidget(String resultKey, EventInfo event) {
-    return Container(
-      width: 200, // 簡化後減少寬度
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(6),
-        color: Colors.grey[50],
-      ),
-      child: Column(
-        children: [
-          // 標題
-          Text(
-            '田賽成績',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
-            ),
-          ),
-          const SizedBox(height: 8),
-          
-          // 單一成績輸入框
-          TextField(
+    final rank = _fieldRankings[resultKey];
+    
+    return Row(
+      children: [
+        // 成績輸入框 - 像徑賽一樣簡潔
+        Expanded(
+          child: TextField(
             controller: _getOrCreateController(resultKey, true),
             decoration: InputDecoration(
-              hintText: '請輸入成績',
+              hintText: '0.00',
+              hintStyle: TextStyle(color: Colors.grey[400]),
               suffixText: 'm',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               isDense: true,
             ),
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
             onChanged: (value) {
-              // 保存成績並自動計算排名
               _preliminaryResults[resultKey] = value;
               _calculateFieldRanking(event);
               setState(() {});
             },
           ),
-          
-          const SizedBox(height: 8),
-          
-          // 顯示當前排名
-          _buildFieldRankingDisplay(resultKey, event),
-        ],
-      ),
+        ),
+        
+        // 排名顯示
+        if (rank != null && _preliminaryResults[resultKey]?.isNotEmpty == true)
+          Container(
+            margin: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: rank <= 3 ? _getRankColor(rank) : Colors.grey[200],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '$rank',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: rank <= 3 ? Colors.white : Colors.grey[700],
+              ),
+            ),
+          ),
+      ],
     );
   }
   
@@ -1278,34 +1270,6 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     }
   }
   
-  /// 顯示田賽排名
-  Widget _buildFieldRankingDisplay(String resultKey, EventInfo event) {
-    final rank = _fieldRankings[resultKey];
-    final score = _preliminaryResults[resultKey];
-    
-    if (rank == null || score == null || score.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: rank <= 3 ? _getRankColor(rank) : Colors.grey[100],
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: rank <= 3 ? _getRankBorderColor(rank) : Colors.grey[300]!,
-        ),
-      ),
-      child: Text(
-        '第 $rank 名',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: rank <= 3 ? Colors.white : Colors.grey[700],
-        ),
-      ),
-    );
-  }
   
   /// 獲取排名顏色
   Color _getRankColor(int rank) {
@@ -1356,7 +1320,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: BoxDecoration(
+                            decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: Colors.grey[300]!),

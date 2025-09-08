@@ -1101,11 +1101,27 @@ class _RankingsScreenState extends State<RankingsScreen>
     };
   }
 
-  /// 獲取所有班級
+  /// 獲取所有班級 - 包含標準班級1A-6D
   List<String> _getAllClasses() {
-    final classes = _appState.students.map((s) => s.classId).toSet().toList();
-    classes.sort();
-    return classes;
+    final standardClasses = <String>[];
+    
+    // 生成標準班級 1A-6D
+    for (int grade = 1; grade <= 6; grade++) {
+      for (String section in ['A', 'B', 'C', 'D']) {
+        standardClasses.add('$grade$section');
+      }
+    }
+    
+    // 添加實際存在的非標準班級
+    final existingClasses = _appState.students.map((s) => s.classId).toSet();
+    for (final classId in existingClasses) {
+      if (!standardClasses.contains(classId)) {
+        standardClasses.add(classId);
+      }
+    }
+    
+    standardClasses.sort();
+    return standardClasses;
   }
 
   /// 獲取篩選後的學生
