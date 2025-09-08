@@ -266,13 +266,16 @@ class ScoringService {
     else if (finalResult != null && finalResult.isNotEmpty && 
              gender != null && division != null && eventName != null) {
       try {
-        // 檢查是否破校紀錄
-        if (RecordsService.breaksRecord(eventName, gender, division, finalResult)) {
-          recordBonus += 3; // 破校紀錄+3分
-        }
-        // 如果沒破紀錄，檢查是否達標準成績
-        else if (RecordsService.meetsStandard(eventName, gender, division, finalResult)) {
-          recordBonus += 1; // 達標準成績+1分
+        final record = RecordsService.getMatchingRecord(eventName, gender, division);
+        if (record != null) {
+          // 檢查是否破校紀錄
+          if (record.breaksRecord(finalResult)) {
+            recordBonus += 3; // 破校紀錄+3分
+          }
+          // 如果沒破紀錄，檢查是否達標準成績
+          else if (record.meetsStandard(finalResult)) {
+            recordBonus += 1; // 達標準成績+1分
+          }
         }
       } catch (e) {
         // 如果紀錄檢查失敗，使用原有邏輯

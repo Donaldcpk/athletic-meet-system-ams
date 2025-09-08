@@ -1160,9 +1160,9 @@ class _RankingsScreenState extends State<RankingsScreen>
     final classRankings = _calculateClassLeaderboard();
     
     return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1171,7 +1171,7 @@ class _RankingsScreenState extends State<RankingsScreen>
               border: Border.all(color: Colors.blue[200]!),
             ),
             child: const Row(
-              children: [
+                  children: [
                 Icon(Icons.leaderboard, color: Colors.blue),
                 SizedBox(width: 8),
                 Expanded(
@@ -1194,9 +1194,9 @@ class _RankingsScreenState extends State<RankingsScreen>
                           color: Colors.grey,
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
+              ),
               ],
             ),
           ),
@@ -1265,12 +1265,12 @@ class _RankingsScreenState extends State<RankingsScreen>
                               color: Colors.green[800],
                             ),
                           ),
-                        ),
-                      ),
-                    ],
+              ),
+            ),
+          ],
                   );
                 }).toList(),
-              ),
+        ),
             ),
           ),
         ],
@@ -1281,7 +1281,7 @@ class _RankingsScreenState extends State<RankingsScreen>
   /// 詳細數據視圖
   Widget _buildDetailedDataView() {
     return Container(
-      padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           Container(
@@ -1296,9 +1296,9 @@ class _RankingsScreenState extends State<RankingsScreen>
                 Icon(Icons.analytics, color: Colors.purple),
                 SizedBox(width: 8),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
                       Text(
                         '詳細數據分析',
                         style: TextStyle(

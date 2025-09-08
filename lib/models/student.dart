@@ -173,9 +173,9 @@ enum Gender {
 
 /// 組別枚舉（甲乙丙組）
 enum Division {
-  senior('甲組', [16, 17, 18]), // 中四至中六
-  junior('乙組', [14, 15]),      // 中二至中三
-  primary('丙組', [13]);         // 中一
+  senior('甲組', [2007, 2008, 2009]), // 2007-2009年出生
+  junior('乙組', [2010, 2011]),        // 2010-2011年出生
+  primary('丙組', [2012, 2013, 2014]); // 2012年或之後出生
 
   const Division(this.displayName, this.ages);
   final String displayName;
@@ -183,23 +183,30 @@ enum Division {
 
   /// 根據出生年份獲取組別（主要分組方法）
   static Division fromBirthYear(int birthYear) {
-    if (birthYear <= 2009) return Division.senior;    // 2009年或之前 → 甲組
-    if (birthYear <= 2011) return Division.junior;    // 2010-2011年 → 乙組
-    return Division.primary;                           // 2012年或之後（包括2013、2014等）→ 丙組
+    if (birthYear >= 2007 && birthYear <= 2009) return Division.senior;    // 2007-2009年 → 甲組
+    if (birthYear >= 2010 && birthYear <= 2011) return Division.junior;    // 2010-2011年 → 乙組
+    if (birthYear >= 2012) return Division.primary;                        // 2012年或之後 → 丙組
+    
+    // 對於2007年之前的學生（過年齡），視為甲組
+    if (birthYear < 2007) return Division.senior;
+    
+    return Division.primary; // 默認為丙組
   }
 
   /// 根據年級獲取組別（向後兼容性）
+  /// 年級對應：1年級→丙組，2-3年級→乙組，4-6年級→甲組
+  /// 這與年齡劃分對應：2012+年出生→丙組，2010-2011年出生→乙組，2007-2009年出生→甲組
   static Division fromGrade(int grade) {
     switch (grade) {
       case 1:
-        return Division.primary;
+        return Division.primary;   // 中一 → 丙組
       case 2:
       case 3:
-        return Division.junior;
+        return Division.junior;    // 中二、中三 → 乙組
       case 4:
       case 5:
       case 6:
-        return Division.senior;
+        return Division.senior;    // 中四、中五、中六 → 甲組
       default:
         throw ArgumentError('Invalid grade: $grade');
     }

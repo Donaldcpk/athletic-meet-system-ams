@@ -56,7 +56,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   // TextEditingController管理
   final Map<String, TextEditingController> _preliminaryControllers = {};
   final Map<String, TextEditingController> _finalsControllers = {};
-  
+
   @override
   void initState() {
     super.initState();
@@ -75,12 +75,12 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       print('❌ 紀錄系統初始化失敗: $e');
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // 檢查是否有查看裁判系統的權限
     if (!UserService.hasPermission(UserPermissions.viewRefereeSystem)) {
-      return Scaffold(
+    return Scaffold(
         appBar: const CommonAppBar(title: '裁判系統'),
         body: const Center(
           child: Column(
@@ -97,9 +97,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                 '請聯繫系統管理員獲取權限',
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
-            ],
-          ),
+          ],
         ),
+      ),
       );
     }
 
@@ -176,13 +176,13 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
                   color: Colors.blue[50],
-                  border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
-                ),
+        border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+      ),
                 child: const Row(
-                  children: [
+        children: [
                     Icon(Icons.list, color: Colors.blue),
                     SizedBox(width: 8),
                     Text(
@@ -226,10 +226,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                       ),
                     );
                   },
-                ),
-              ),
-            ],
+            ),
           ),
+        ],
+      ),
         ),
         
         // 右側成績輸入區域
@@ -242,17 +242,17 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   ],
                 )
               : const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
                       Icon(Icons.arrow_back, size: 48, color: Colors.grey),
                       SizedBox(height: 16),
-                      Text(
+            Text(
                         '請在左側選擇一個項目開始輸入初賽成績',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ],
-                  ),
+            ),
+          ],
+        ),
                 ),
         ),
       ],
@@ -272,16 +272,16 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             border: Border(right: BorderSide(color: Colors.grey[300]!)),
           ),
           child: Column(
-            children: [
+          children: [
               // 搜索和篩選
-              Container(
+            Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.grey[50],
                   border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
                 ),
-                child: Column(
-                  children: [
+              child: Column(
+                children: [
                     TextField(
                       controller: _searchController,
                       decoration: const InputDecoration(
@@ -319,7 +319,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                       ),
                       child: ListTile(
                         title: Text(
-                          event.name,
+                    event.name,
                           style: TextStyle(
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           ),
@@ -329,23 +329,23 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                           children: [
                             Text(event.code),
                             if (hasFinalists)
-                              Container(
+                    Container(
                                 margin: const EdgeInsets.only(top: 4),
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
+                      decoration: BoxDecoration(
                                   color: Colors.green[100],
                                   borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
+                      ),
+                      child: Text(
                                   '已有決賽名單',
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: Colors.green[700],
                                   ),
-                                ),
-                              ),
-                          ],
-                        ),
+                      ),
+                    ),
+                ],
+              ),
                         selected: isSelected,
                         onTap: () => setState(() => _selectedEvent = event),
                       ),
@@ -368,18 +368,18 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   ],
                 )
               : const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                       Icon(Icons.emoji_events, size: 48, color: Colors.grey),
                       SizedBox(height: 16),
-                      Text(
+                  Text(
                         '請在左側選擇一個項目開始輸入決賽成績',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                ],
+              ),
+            ),
         ),
       ],
     );
@@ -391,9 +391,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     
     final hasFinalists = _finalists[_selectedEvent!.code]?.isNotEmpty ?? false;
     
-    return Container(
+      return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
+        decoration: BoxDecoration(
         color: Colors.grey[50],
         border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
       ),
@@ -450,9 +450,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
               ),
             ),
         ],
-      ),
-    );
-  }
+        ),
+      );
+    }
 
   /// 決賽成績輸入表格
   Widget _buildFinalsTable(EventInfo event) {
@@ -601,7 +601,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         ),
       );
     }
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -655,9 +655,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                 ],
                 border: Border.all(color: Colors.grey[200]!),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                   // 項目標題
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -669,14 +669,14 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                       ),
                     ),
                     child: Row(
-                      children: [
+                  children: [
                         Icon(Icons.sports, color: Colors.blue[700]),
-                        const SizedBox(width: 8),
-                        Text(
+                    const SizedBox(width: 8),
+                    Text(
                           event.name,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                             color: Colors.blue[800],
                           ),
                         ),
@@ -691,13 +691,13 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                             eventCode,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.blue[700],
+                        color: Colors.blue[700],
                               fontWeight: FontWeight.w500,
                             ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
+                  ],
+                ),
                   ),
                   
                   // 三甲名單
@@ -742,9 +742,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   Widget _buildPodiumWinnerCard(PodiumWinner winner, int position, Color color, String medal) {
     final height = position == 1 ? 140.0 : position == 2 ? 120.0 : 100.0;
     
-    return Container(
+                    return Container(
       height: height,
-      decoration: BoxDecoration(
+                      decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color, width: 2),
@@ -758,31 +758,31 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+                        children: [
           // 獎牌
           Text(medal, style: const TextStyle(fontSize: 28)),
           const SizedBox(height: 8),
           
           // 名次
-          Container(
+                          Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
+                            decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
+                            ),
+                              child: Text(
               '第 $position 名',
-              style: const TextStyle(
-                color: Colors.white,
+                                style: const TextStyle(
+                                  color: Colors.white,
                 fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
           const SizedBox(height: 8),
           
           // 學生信息
-          Text(
+                                Text(
             winner.studentName,
             style: TextStyle(
               fontSize: 14,
@@ -793,14 +793,14 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           ),
           if (winner.className != null && winner.className!.isNotEmpty) ...[
             const SizedBox(height: 2),
-            Text(
+                                Text(
               winner.className ?? '',
-              style: TextStyle(
+                                  style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
           const SizedBox(height: 4),
           
           // 成績
@@ -814,25 +814,25 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           ),
           
           // 積分
-          Container(
+                            Container(
             margin: const EdgeInsets.only(top: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
               color: Colors.green[100],
               borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
+                              ),
+                              child: Text(
               '+${winner.points}分',
-              style: TextStyle(
-                fontSize: 10,
+                                style: TextStyle(
+                                  fontSize: 10,
                 color: Colors.green[700],
                 fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
   }
 
   /// 構建接力賽事卡片
@@ -1020,7 +1020,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           // 表格標題
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.blue[50],
               border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
@@ -1103,10 +1103,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           // 操作按鈕 - 根據權限顯示
           if (UserService.hasPermission(UserPermissions.inputScores))
             Container(
-              padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
+              children: [
                   ElevatedButton.icon(
                     onPressed: () => _savePreliminaryResults(event),
                     icon: const Icon(Icons.save),
@@ -1118,8 +1118,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                       icon: const Icon(Icons.list),
                       label: const Text('生成決賽名單'),
                     ),
-                ],
-              ),
+                  ],
+                ),
             ),
         ],
       ),
@@ -1128,9 +1128,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
 
   /// 田賽成績輸入
   Widget _buildFieldAttemptsWidget(String resultKey, EventInfo event) {
-    return Container(
+                    return Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
+                      decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
         borderRadius: BorderRadius.circular(4),
       ),
@@ -1156,10 +1156,10 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                     color: isBest ? Colors.green[50] : Colors.white,
                   ),
                   child: Column(
-                    children: [
-                      Container(
+                        children: [
+                          Container(
                         padding: const EdgeInsets.symmetric(vertical: 2),
-                        decoration: BoxDecoration(
+                            decoration: BoxDecoration(
                           color: isBest ? Colors.green[100] : Colors.grey[100],
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(4),
@@ -1209,9 +1209,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                                 ),
                                 textAlign: TextAlign.center,
                               ),
+                                ),
+                              ],
                             ),
-                    ],
-                  ),
                 ),
               );
             }),
@@ -1220,7 +1220,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           
           // 狀態控制區域（包含嘗試次數選擇）
           Row(
-            children: [
+                              children: [
               // 嘗試次數選擇
               if (UserService.hasPermission(UserPermissions.inputScores)) ...[
                 SizedBox(
@@ -1360,7 +1360,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         statusText,
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.bold,
           color: textColor,
         ),
       ),
@@ -1390,8 +1390,8 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         ),
         child: Text(
           statusText,
-          style: TextStyle(
-            color: Colors.grey[600],
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
@@ -1461,12 +1461,12 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
         border: Border.all(color: Colors.amber[200]!, width: 1),
       ),
       child: Row(
-        children: [
+                            children: [
           Icon(Icons.emoji_events, color: Colors.amber[700], size: 16),
           const SizedBox(width: 8),
-          Text(
+                              Text(
             _selectedEvent!.code,
-            style: TextStyle(
+                                style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.blue[800],
@@ -1487,21 +1487,21 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             style: TextStyle(fontSize: 11, color: Colors.green[700]),
           ),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.blue[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue[100],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
               '破紀錄+3分 達標+1分',
-              style: TextStyle(
+                                    style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w500,
                 color: Colors.blue[800],
-              ),
-            ),
-          ),
+                                    ),
+                                  ),
+                                ),
           const SizedBox(width: 8),
           if (UserService.hasPermission(UserPermissions.inputScores))
             ElevatedButton.icon(
@@ -2110,7 +2110,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
 
   /// 其他方法
   void _savePreliminaryResults(EventInfo event) {
-    ScaffoldMessenger.of(context).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('已保存 ${event.name} 初賽成績'),
         backgroundColor: Colors.green,
