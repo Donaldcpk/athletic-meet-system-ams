@@ -28,3 +28,9 @@ Thumbs.db
 
 # Keep web build for deployment
 !build/web/
+# Ignore root level build artifacts copied for Vercel
+/main.dart.js
+/flutter.js
+/flutter_bootstrap.js
+/flutter_service_worker.js
+/version.json

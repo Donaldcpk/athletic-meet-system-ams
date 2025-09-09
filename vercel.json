@@ -1,14 +1,4 @@
 {
-  "builds": [
-    {
-      "src": "build/web/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "installCommand": "flutter pub get",
-  "buildCommand": "flutter build web --release",
-  "devCommand": "",
-  "outputDirectory": "build/web",
   "rewrites": [
     {
       "source": "/(.*)",
