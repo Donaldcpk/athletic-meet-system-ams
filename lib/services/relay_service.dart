@@ -2,18 +2,20 @@
 /// 支援統一接力賽格式、即時排名計算、積分整合
 import 'dart:convert';
 import '../models/student.dart';
+import '../models/event.dart' as EventModel;
 import '../constants/event_constants.dart';
 import '../constants/app_constants.dart';
 import 'storage_service.dart';
 import 'scoring_service.dart';
 import 'realtime_sync_service.dart';
+import 'dart:html' as html;
 
 /// 接力賽服務
 class RelayService {
   static const String _storageKey = 'relay_results';
   
   /// 接力賽結果資料
-  static final Map<String, Map<String, List<RelayTeamResult>>> _relayResults = {};
+  static final Map<String, Map<String, Map<String, List<RelayTeamResult>>>> _relayResults = {};
   
   /// 初始化接力賽服務
   static Future<void> initialize() async {
@@ -23,7 +25,7 @@ class RelayService {
   /// 載入接力賽結果
   static Future<void> _loadResults() async {
     try {
-      final data = await StorageService.getData(_storageKey);
+      final data = html.window.localStorage[_storageKey];
       if (data != null) {
         final jsonData = json.decode(data);
         _relayResults.clear();
@@ -68,14 +70,14 @@ class RelayService {
         }
       }
       
-      await StorageService.saveData(_storageKey, json.encode(jsonData));
+      html.window.localStorage[_storageKey] = json.encode(jsonData);
       
-      // 觸發即時同步
-      RealtimeSyncService.broadcastUpdate('relay_results', {
-        'action': 'update',
-        'data': jsonData,
-        'timestamp': DateTime.now().toIso8601String(),
-      });
+      // 觸發即時同步 (暫時註釋)
+      // RealtimeSyncService.broadcastUpdate('relay_results', {
+      //   'action': 'update',
+      //   'data': jsonData,
+      //   'timestamp': DateTime.now().toIso8601String(),
+      // });
     } catch (e) {
       print('儲存接力賽結果失敗：$e');
     }
@@ -157,7 +159,7 @@ class RelayService {
     for (int i = 0; i < sortedEntries.length; i++) {
       final entry = sortedEntries[i];
       final rank = i + 1;
-      final points = AppConstants.calculatePositionPoints(rank, EventType.relay);
+      final points = AppConstants.calculatePositionPoints(rank, EventModel.EventType.relay);
       
       // 更新排名信息
       entry.value.rank = rank;

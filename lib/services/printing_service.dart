@@ -435,27 +435,9 @@ class PrintingService {
   
   /// 執行HTML列印
   static void _printHTML(String htmlContent, String filename) {
-    // 創建一個隱藏的iframe進行列印
-    final iframe = html.IFrameElement()
-      ..style.display = 'none'
-      ..srcdoc = htmlContent;
-    
-    html.document.body?.append(iframe);
-    
-    // 等待iframe載入完成後列印
-    iframe.onLoad.listen((_) {
-      try {
-        iframe.contentWindow?.print();
-        
-        // 延遲移除iframe
-        Future.delayed(const Duration(seconds: 2), () {
-          iframe.remove();
-        });
-      } catch (e) {
-        print('列印過程中發生錯誤：$e');
-        iframe.remove();
-      }
-    });
+    // 簡化版：下載HTML文件供用戶列印
+    _downloadFile(htmlContent, '${filename}.html');
+    print('🖨️ 已下載HTML文件，可用瀏覽器開啟並列印');
   }
   
   /// 格式化日期時間

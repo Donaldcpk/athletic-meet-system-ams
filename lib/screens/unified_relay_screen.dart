@@ -1,6 +1,8 @@
 /// 統一接力賽管理畫面
 /// 支援4x100c、4x400c、4x100s、4x400s統一顯示和即時排名
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:html' as html;
 import '../models/student.dart';
 import '../models/event.dart';
 import '../models/result.dart';
@@ -35,7 +37,7 @@ class _UnifiedRelayScreenState extends State<UnifiedRelayScreen>
   @override
   void initState() {
     super.initState();
-    _appState = AppState.instance;
+    _appState = AppState();
     _tabController = TabController(length: 3, vsync: this); // 甲、乙、丙組
     _loadResults();
   }
@@ -212,7 +214,7 @@ class _UnifiedRelayScreenState extends State<UnifiedRelayScreen>
         'results': _results,
         'lastUpdated': DateTime.now().toIso8601String(),
       };
-      await StorageService.saveData('relay_${widget.eventCode}', data);
+      html.window.localStorage['relay_${widget.eventCode}'] = json.encode(data);
     } catch (e) {
       print('儲存成績失敗：$e');
     }

@@ -17,6 +17,9 @@ import '../services/scoring_service.dart';
 import '../services/lane_allocation_service.dart';
 import '../services/records_service.dart';
 import '../services/user_service.dart';
+import '../services/relay_service.dart';
+import '../services/printing_service.dart';
+import 'unified_relay_screen.dart';
 
 /// 裁判系統主界面
 class RefereeSystemScreen extends StatefulWidget {
@@ -63,7 +66,18 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _initializeRecords();
+    _initializeServices();
     _loadResultsData();
+  }
+
+  /// 初始化服務
+  Future<void> _initializeServices() async {
+    try {
+      await RelayService.initialize();
+      print('✅ 接力賽服務已初始化');
+    } catch (e) {
+      print('❌ 接力賽服務初始化失敗：$e');
+    }
   }
   
   /// 初始化紀錄系統
@@ -542,31 +556,19 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   Widget _buildRelayView() {
     final events = _getFilteredEvents();
     final relayEvents = events.where((e) => 
-      e.category == EventCategory.relay || e.category == EventCategory.special).toList();
+      e.category == EventCategory.relay || 
+      e.category == EventCategory.special ||
+      e.isClassRelay == true ||
+      ['4x100c', '4x400c', '4x100s', '4x400s'].contains(e.code)).toList();
     
-    // 調試信息
-    print('🔍 所有項目數量: ${EventConstants.allEvents.length}');
-    print('🔍 當前標籤頁索引: ${_tabController.index}');
-    print('🔍 過濾後項目數量: ${events.length}');
-    print('🔍 接力項目數量: ${relayEvents.length}');
-    
-    // 列出所有接力和特殊項目
-    final allRelaySpecial = EventConstants.allEvents.where((e) => 
-      e.category == EventCategory.relay || e.category == EventCategory.special).toList();
-    print('🔍 EventConstants中的接力/特殊項目數量: ${allRelaySpecial.length}');
-    for (final event in allRelaySpecial) {
-      print('🔍 定義的接力/特殊項目: ${event.code} - ${event.name} (${event.category})');
-    }
-    
-    for (final event in relayEvents) {
-      print('🔍 過濾後的接力項目: ${event.code} - ${event.name} (${event.category})');
-    }
+    // 統一接力賽項目
+    final unifiedRelayEvents = ['4x100c', '4x400c', '4x100s', '4x400s'];
     
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.purple[50],
             border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
           ),
@@ -585,7 +587,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   color: Colors.blue[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
-        child: Text(
+                child: Text(
                   '${relayEvents.length} 個項目',
                   style: TextStyle(fontSize: 12, color: Colors.blue[800]),
                 ),
@@ -594,8 +596,97 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
           ),
         ),
         
-        // 如果沒有接力項目，顯示提示
-        if (relayEvents.isEmpty)
+        // 統一接力賽管理按鈕區域
+        Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '統一接力賽管理 (新版)',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: unifiedRelayEvents.map((eventCode) {
+                  final event = EventConstants.findByCode(eventCode);
+                  return ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => UnifiedRelayScreen(eventCode: eventCode),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.timer, size: 18),
+                    label: Text(event?.name ?? eventCode),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[100],
+                      foregroundColor: Colors.blue[800],
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.info, size: 16, color: Colors.orange),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '統一接力賽支援即時排名計算、班級積分整合和前三名列印功能',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
+        const Divider(),
+        
+        // 傳統接力項目
+        if (relayEvents.isNotEmpty)
+          Expanded(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Text(
+                        '傳統接力項目',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${relayEvents.length} 個項目',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: relayEvents.length,
+                    itemBuilder: (context, index) {
+                      final event = relayEvents[index];
+                      return Card(
+                        margin: const EdgeInsets.all(8),
+                        child: _buildRelayEventCard(event),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
           Expanded(
             child: Center(
               child: Column(
@@ -604,33 +695,16 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   Icon(Icons.info_outline, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
-                    '沒有找到接力項目',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                    '請使用上方的統一接力賽管理功能',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '總項目數: ${EventConstants.allEvents.length}',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                  ),
-                  Text(
-                    '當前標籤頁: ${_tabController.index}',
+                    '支援即時排名和積分計算',
                     style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   ),
                 ],
               ),
-            ),
-          )
-        else
-          Expanded(
-            child: ListView.builder(
-              itemCount: relayEvents.length,
-              itemBuilder: (context, index) {
-                final event = relayEvents[index];
-                return Card(
-                  margin: const EdgeInsets.all(8),
-                  child: _buildRelayEventCard(event),
-                );
-              },
             ),
           ),
       ],
@@ -1518,7 +1592,20 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                                   ),
                                 ),
           const SizedBox(width: 8),
-          if (UserService.hasPermission(UserPermissions.inputScores))
+          if (UserService.hasPermission(UserPermissions.inputScores)) ...[
+            ElevatedButton.icon(
+              onPressed: () => _confirmEventScores(_selectedEvent!.code),
+              icon: const Icon(Icons.save, size: 14),
+              label: const Text('確認成績'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green[100],
+                foregroundColor: Colors.green[700],
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                textStyle: const TextStyle(fontSize: 11),
+                minimumSize: const Size(0, 28),
+              ),
+            ),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
               onPressed: () => _clearAllEventInputs(),
               icon: const Icon(Icons.clear_all, size: 14),
@@ -1531,6 +1618,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                 minimumSize: const Size(0, 28),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -1541,8 +1629,11 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     return EventConstants.allEvents.where((event) {
       // 根據當前標籤頁過濾事件
       if (_tabController.index == 2) {
-        // 接力賽事標籤頁
-        return event.category == EventCategory.relay || event.category == EventCategory.special;
+        // 接力賽事標籤頁 - 包含新的統一接力賽格式
+        return event.category == EventCategory.relay || 
+               event.category == EventCategory.special ||
+               event.isClassRelay == true ||
+               ['4x100c', '4x400c', '4x100s', '4x400s'].contains(event.code);
       } else {
         // 初賽和決賽標籤頁顯示個人項目
         return event.category == EventCategory.track || event.category == EventCategory.field;
@@ -1551,19 +1642,18 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   }
   
   List<Student> _getSortedParticipants(EventInfo event) {
+    // 修改：不限制報名項目，允許所有學生輸入任何項目的成績
     return _appState.students
-        .where((student) => student.registeredEvents.contains(event.code))
         .toList()
       ..sort((a, b) => a.studentCode.compareTo(b.studentCode));
   }
   
   bool _hasEventResults(EventInfo event) {
+    // 修改：檢查所有學生，不限制報名項目
     for (final student in _appState.students) {
-      if (student.registeredEvents.contains(event.code)) {
-        final preliminaryKey = '${student.id}_${event.code}';
-        if (_preliminaryResults[preliminaryKey]?.isNotEmpty ?? false) {
-          return true;
-        }
+      final preliminaryKey = '${student.id}_${event.code}';
+      if (_preliminaryResults[preliminaryKey]?.isNotEmpty ?? false) {
+        return true;
       }
     }
     return false;
@@ -1815,6 +1905,51 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('已準備 ${event.name} 決賽名單，共 ${finalists.length} 位參賽者'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  /// 確認成績並整合到積分系統
+  Future<void> _confirmEventScores(String eventCode) async {
+    final event = EventConstants.allEvents.firstWhere((e) => e.code == eventCode);
+    final participants = _appState.students; // 所有學生都可以有成績
+    
+    for (final student in participants) {
+      final resultKey = '${student.id}_${event.code}';
+      final preliminaryResult = _preliminaryResults[resultKey];
+      final finalsResult = _finalsResults[resultKey];
+      final isDNF = _dnfStatus[resultKey] ?? false;
+      final isDQ = _dqStatus[resultKey] ?? false;
+      final isABS = _absStatus[resultKey] ?? false;
+      
+      // 如果有任何成績或狀態，就保存到積分系統
+      if ((preliminaryResult?.isNotEmpty ?? false) || 
+          (finalsResult?.isNotEmpty ?? false) || 
+          isDNF || isDQ || isABS) {
+        
+        try {
+          await ScoringService.updateStudentScore(
+            studentId: student.id,
+            eventCode: event.code,
+            preliminaryResult: preliminaryResult,
+            finalsResult: finalsResult,
+            isDNF: isDNF,
+            isDQ: isDQ,
+            isABS: isABS,
+            isRecordBreaker: false, // 暫時設為false，可以擴展為自動檢測
+          );
+          
+          print('✅ 已保存 ${student.name} 在 ${event.name} 的成績');
+        } catch (e) {
+          print('❌ 保存成績失敗：${student.name} - ${event.name}: $e');
+        }
+      }
+    }
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ ${event.name} 成績已確認並整合到積分系統'),
         backgroundColor: Colors.green,
       ),
     );
