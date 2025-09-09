@@ -1,0 +1,15 @@
+# Flutter project files that shouldn't trigger Flutter build
+pubspec.yaml
+pubspec.lock
+analysis_options.yaml
+lib/
+test/
+android/
+ios/
+linux/
+macos/
+windows/
+web/
+
+# Keep only the built web files in root
+# All web build artifacts are already copied to root directory
