@@ -17,9 +17,8 @@ import '../services/scoring_service.dart';
 import '../services/lane_allocation_service.dart';
 import '../services/records_service.dart';
 import '../services/user_service.dart';
-import '../services/relay_service.dart';
-import '../services/printing_service.dart';
-import 'unified_relay_screen.dart';
+import '../services/grade_relay_service.dart';
+import 'grade_relay_screen.dart';
 
 /// 裁判系統主界面
 class RefereeSystemScreen extends StatefulWidget {
@@ -73,7 +72,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   /// 初始化服務
   Future<void> _initializeServices() async {
     try {
-      await RelayService.initialize();
+      await GradeRelayService.initialize();
       print('✅ 接力賽服務已初始化');
     } catch (e) {
       print('❌ 接力賽服務初始化失敗：$e');
@@ -603,7 +602,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '統一接力賽管理 (新版)',
+                '年級接力賽管理 - 按年級排名',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
@@ -617,7 +616,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => UnifiedRelayScreen(eventCode: eventCode),
+                          builder: (context) => GradeRelayScreen(eventCode: eventCode),
                         ),
                       );
                     },
@@ -638,7 +637,7 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      '統一接力賽支援即時排名計算、班級積分整合和前三名列印功能',
+                      '年級接力賽：所有班級均可參與，按1-6年級分別排名，即時計算積分',
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ),

@@ -1374,6 +1374,8 @@ class _RankingsScreenState extends State<RankingsScreen>
     }
     
     // 計算各班積分
+
+
     final allScores = ScoringService.allScores.values;
     for (final score in allScores) {
       // 檢查是否為接力賽代表
