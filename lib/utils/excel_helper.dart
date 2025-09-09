@@ -187,7 +187,9 @@ class ExcelHelper {
         // 檢查組別匹配
         final division = Division.fromBirthYear(birthYear);
         if (!eventInfo.divisions.contains(division)) {
-          throw '項目 $eventCode (${eventInfo.name}) 不適用於${division.displayName}';
+          // 提供更詳細的錯誤信息以便調試
+          final allowedDivisions = eventInfo.divisions.map((d) => d.displayName).join('、');
+          throw '項目 $eventCode (${eventInfo.name}) 不適用於${division.displayName}，此項目適用於：$allowedDivisions (出生年份：$birthYear)';
         }
 
         registeredEvents.add(eventCode);

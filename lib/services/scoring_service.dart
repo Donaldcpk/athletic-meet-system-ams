@@ -206,14 +206,19 @@ class ScoringService {
     return studentScores.fold(0, (total, score) => total + score.totalPoints);
   }
   
-  /// 計算班級總積分
+  /// 計算班級總積分（包含接力賽積分）
   static int getClassTotalPoints(String classId, List<Student> students) {
     final classStudents = students.where((s) => s.classId == classId).toList();
     int total = 0;
     
+    // 個人項目積分
     for (final student in classStudents) {
       total += getStudentTotalPoints(student.id);
     }
+    
+    // 接力賽積分（班級代表）
+    final classRelayId = '${classId}_relay_representative';
+    total += getStudentTotalPoints(classRelayId);
     
     return total;
   }
@@ -337,6 +342,48 @@ class ScoringService {
       'lastUpdated': eventScores.isNotEmpty 
           ? eventScores.map((s) => s.lastUpdated).reduce((a, b) => a.isAfter(b) ? a : b)
           : null,
+    };
+  }
+  
+  /// 獲取班級接力賽積分
+  static int getClassRelayPoints(String classId) {
+    final classRelayId = '${classId}_relay_representative';
+    return getStudentTotalPoints(classRelayId);
+  }
+  
+  /// 獲取班級詳細積分分析
+  static Map<String, dynamic> getClassPointsAnalysis(String classId, List<Student> students) {
+    final classStudents = students.where((s) => s.classId == classId).toList();
+    
+    int individualPoints = 0;
+    int relayPoints = 0;
+    int participationPoints = 0;
+    int awardPoints = 0;
+    int recordBonus = 0;
+    
+    // 計算個人項目積分
+    for (final student in classStudents) {
+      final studentScores = getStudentAllScores(student.id);
+      for (final score in studentScores) {
+        individualPoints += score.totalPoints;
+        participationPoints += score.participationPoints;
+        awardPoints += score.awardPoints;
+        recordBonus += score.recordBonus;
+      }
+    }
+    
+    // 計算接力賽積分
+    relayPoints = getClassRelayPoints(classId);
+    
+    return {
+      'classId': classId,
+      'totalPoints': individualPoints + relayPoints,
+      'individualPoints': individualPoints,
+      'relayPoints': relayPoints,
+      'participationPoints': participationPoints,
+      'awardPoints': awardPoints,
+      'recordBonus': recordBonus,
+      'studentCount': classStudents.length,
     };
   }
 }

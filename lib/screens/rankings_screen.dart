@@ -1356,26 +1356,35 @@ class _RankingsScreenState extends State<RankingsScreen>
     );
   }
 
-  /// 計算班級排行榜
+  /// 計算班級排行榜（包含接力賽積分）
   List<Map<String, dynamic>> _calculateClassLeaderboard() {
     final classPoints = <String, Map<String, int>>{};
+    final allClasses = _getAllClasses();
     
     // 初始化各班級積分
-    for (final student in _appState.students) {
-      if (!classPoints.containsKey(student.classId)) {
-        classPoints[student.classId] = {
-          'participantCount': 0,
-          'participationPoints': 0,
-          'awardPoints': 0,
-          'recordBonus': 0,
-          'totalPoints': 0,
-        };
-      }
+    for (final className in allClasses) {
+      classPoints[className] = {
+        'participantCount': 0,
+        'participationPoints': 0,
+        'awardPoints': 0,
+        'recordBonus': 0,
+        'relayPoints': 0,
+        'totalPoints': 0,
+      };
     }
     
     // 計算各班積分
     final allScores = ScoringService.allScores.values;
     for (final score in allScores) {
+      // 檢查是否為接力賽代表
+      if (score.studentId.endsWith('_relay_representative')) {
+        final classId = score.studentId.split('_relay_representative')[0];
+        if (classPoints.containsKey(classId)) {
+          classPoints[classId]!['relayPoints'] = (classPoints[classId]!['relayPoints']! as int) + score.totalPoints;
+        }
+        continue;
+      }
+      
       final student = _appState.students.firstWhere(
         (s) => s.id == score.studentId,
         orElse: () => Student(
@@ -1392,12 +1401,20 @@ class _RankingsScreenState extends State<RankingsScreen>
       );
       
       if (classPoints.containsKey(student.classId)) {
-        classPoints[student.classId]!['participantCount'] = classPoints[student.classId]!['participantCount']! + 1;
-        classPoints[student.classId]!['participationPoints'] = classPoints[student.classId]!['participationPoints']! + score.participationPoints;
-        classPoints[student.classId]!['awardPoints'] = classPoints[student.classId]!['awardPoints']! + score.awardPoints;
-        classPoints[student.classId]!['recordBonus'] = classPoints[student.classId]!['recordBonus']! + score.recordBonus;
-        classPoints[student.classId]!['totalPoints'] = classPoints[student.classId]!['totalPoints']! + score.totalPoints;
+        classPoints[student.classId]!['participantCount'] = (classPoints[student.classId]!['participantCount']! as int) + 1;
+        classPoints[student.classId]!['participationPoints'] = (classPoints[student.classId]!['participationPoints']! as int) + score.participationPoints;
+        classPoints[student.classId]!['awardPoints'] = (classPoints[student.classId]!['awardPoints']! as int) + score.awardPoints;
+        classPoints[student.classId]!['recordBonus'] = (classPoints[student.classId]!['recordBonus']! as int) + score.recordBonus;
       }
+    }
+    
+    // 計算總分（個人項目 + 接力賽）
+    for (final className in allClasses) {
+      final individualTotal = (classPoints[className]!['participationPoints']! as int) + 
+                             (classPoints[className]!['awardPoints']! as int) + 
+                             (classPoints[className]!['recordBonus']! as int);
+      final relayTotal = classPoints[className]!['relayPoints']! as int;
+      classPoints[className]!['totalPoints'] = individualTotal + relayTotal;
     }
     
     // 轉換為列表並排序

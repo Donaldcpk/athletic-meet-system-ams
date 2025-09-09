@@ -129,73 +129,29 @@ class EventConstants {
     EventInfo(code: 'BCSP', name: '鉛球', category: EventCategory.field, divisions: [Division.primary], genders: [Gender.male]),
   ];
 
-  /// 班際接力項目 - 1A-6D每四班一組
+  /// 班際接力項目 - 統一格式，支援所有級別
   static const List<EventInfo> classRelayEvents = [
-    // 初小組 (1A-2D) 4x100c
+    // 4x100c班際接力 - 所有級別統一參與
     EventInfo(
-      code: '4x100c_1A2D', 
-      name: '4x100c (1A-2D組)', 
+      code: '4x100c', 
+      name: '4x100c班際接力', 
       category: EventCategory.relay, 
-      divisions: [Division.primary], 
+      divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
       isClassRelay: true,
       maxParticipants: 4,
-      specialRules: '班際接力，1A-2D組，每班最多一隊',
+      specialRules: '班際接力，所有級別統一比賽，按級別分別排名',
     ),
-    // 初小組 (1A-2D) 4x400c
+    // 4x400c班際接力 - 所有級別統一參與
     EventInfo(
-      code: '4x400c_1A2D', 
-      name: '4x400c (1A-2D組)', 
+      code: '4x400c', 
+      name: '4x400c班際接力', 
       category: EventCategory.relay, 
-      divisions: [Division.primary], 
+      divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
       isClassRelay: true,
       maxParticipants: 4,
-      specialRules: '班際接力，1A-2D組，每班最多一隊',
-    ),
-    // 中小組 (3A-4D) 4x100c
-    EventInfo(
-      code: '4x100c_3A4D', 
-      name: '4x100c (3A-4D組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.junior], 
-      genders: [Gender.mixed],
-      isClassRelay: true,
-      maxParticipants: 4,
-      specialRules: '班際接力，3A-4D組，每班最多一隊',
-    ),
-    // 中小組 (3A-4D) 4x400c
-    EventInfo(
-      code: '4x400c_3A4D', 
-      name: '4x400c (3A-4D組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.junior], 
-      genders: [Gender.mixed],
-      isClassRelay: true,
-      maxParticipants: 4,
-      specialRules: '班際接力，3A-4D組，每班最多一隊',
-    ),
-    // 高小組 (5A-6D) 4x100c
-    EventInfo(
-      code: '4x100c_5A6D', 
-      name: '4x100c (5A-6D組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.senior], 
-      genders: [Gender.mixed],
-      isClassRelay: true,
-      maxParticipants: 4,
-      specialRules: '班際接力，5A-6D組，每班最多一隊',
-    ),
-    // 高小組 (5A-6D) 4x400c
-    EventInfo(
-      code: '4x400c_5A6D', 
-      name: '4x400c (5A-6D組)', 
-      category: EventCategory.relay, 
-      divisions: [Division.senior], 
-      genders: [Gender.mixed],
-      isClassRelay: true,
-      maxParticipants: 4,
-      specialRules: '班際接力，5A-6D組，每班最多一隊',
+      specialRules: '班際接力，所有級別統一比賽，按級別分別排名',
     ),
   ];
 
@@ -203,19 +159,19 @@ class EventConstants {
   static const List<EventInfo> societyRelayEvents = [
     EventInfo(
       code: '4x100s', 
-      name: '4x100s (社制接力)', 
+      name: '4x100s社制接力', 
       category: EventCategory.relay, 
       divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
-      specialRules: '社制接力，每社最多一隊，每年級分別排名',
+      specialRules: '社制接力，每社最多一隊，所有級別統一比賽，按級別分別排名',
     ),
     EventInfo(
       code: '4x400s', 
-      name: '4x400s (社制接力)', 
+      name: '4x400s社制接力', 
       category: EventCategory.relay, 
       divisions: [Division.senior, Division.junior, Division.primary], 
       genders: [Gender.mixed],
-      specialRules: '社制接力，每社最多一隊，每年級分別排名',
+      specialRules: '社制接力，每社最多一隊，所有級別統一比賽，按級別分別排名',
     ),
   ];
 
@@ -342,7 +298,7 @@ class RegistrationRules {
   /// 檢查班際接力報名是否有效
   static bool isValidClassRelayRegistration(List<String> eventCodes) {
     final classRelayEvents = eventCodes.where((code) => 
-      ['5641', '5644', '1441', '1444'].contains(code)
+      ['4x100c', '4x400c', '4x100s', '4x400s'].contains(code)
     ).toList();
     
     // 根據香港中學運動會規則，班際接力項目無數量限制
