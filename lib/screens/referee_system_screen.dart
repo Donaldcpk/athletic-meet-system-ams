@@ -1641,8 +1641,9 @@ class _RefereeSystemScreenState extends State<RefereeSystemScreen>
   }
   
   List<Student> _getSortedParticipants(EventInfo event) {
-    // 修改：不限制報名項目，允許所有學生輸入任何項目的成績
+    // 返回已報名該項目的學生
     return _appState.students
+        .where((student) => student.registeredEvents.contains(event.code))
         .toList()
       ..sort((a, b) => a.studentCode.compareTo(b.studentCode));
   }
